@@ -79,3 +79,30 @@ body
     /*   border: 4px solid black; /* Параметры границы */
   /*     background: #fc0; /* Цвет фона */
 }
+
+
+
+.box_left{
+	background-color: #0084FF;
+	width: 700px;
+	height: 700px;
+  margin: 15px;
+  float: left;
+}
+.box_rigt{
+	background-color: #C4FF00;
+	width: 500px;
+	height: 500px;
+  margin: 15px;
+  float: left;
+  margin-top: 100px;
+  margin-right: 250px;
+}
+.box_rigt_top{
+	background-color: #FFE200;
+  width: 300px;
+	height: 50px;
+  margin: 15px;
+  margin-left: 150px;
+  float: left;
+}
