@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ru" >
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Фото Instagram на Яндекс.Карте</title>
+<link href="http://yandex.st/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+<script src="http://yandex.st/jquery/1.8.0/jquery.min.js"></script>
+<script src="http://yandex.st/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script src="http://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+
+<style>
+body, html {
+            padding:0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+}
+
+.btn-additional {
+  color: #FF00FF;
+}
+
+body {
+  padding-top: 50px;
+}
+
+.navbar-brand{
+  height: 100%;
+
+}
+.custom-search-form{
+    margin-top:5px;
+}
+
+</style>
+
+<script type="text/javascript">
+var myMap;
+
+// Дождёмся загрузки API и готовности DOM.
+ymaps.ready(init);
+
+function init () {
+    // Создание экземпляра карты и его привязка к контейнеру с
+    // заданным id ("map").
+    myMap = new ymaps.Map('map', {
+        // При инициализации карты обязательно нужно указать
+        // её центр и коэффициент масштабирования.
+        center: [55.1547, 61.3758], // Челябинск
+        zoom: 12,
+		controls: ['zoomControl', 'typeSelector']
+    });
+
+	var myCollection = new ymaps.GeoObjectCollection();
+
+
+
+  $("#hashsearch").click(function () {
+    var address = $('input[name="search_hash"]').val();
+
+  // 1. Создаём новый объект XMLHttpRequest
+      var xhr = new XMLHttpRequest();
+
+      var str = 'https://api.instagram.com/v1/tags/' + address + '/media/recent?access_token=4723090197.a973d3c.5aea6d57347245e382dcb716401126c4';
+
+
+      // 2. Конфигурируем его
+      xhr.open('GET', str, false);
+
+        // 3. Отсылаем запрос
+      xhr.send();
+
+
+      var json = JSON.parse(xhr.responseText);
+
+      var out = '<ul>';
+      myCollection.removeAll();
+
+      for (j = 0; j < json.data.length; j++) {
+
+            var x = json.data[j].location.latitude;
+            var y = json.data[j].location.longitude;
+
+
+            myCollection.add(new ymaps.Placemark([x, y], {
+              balloonContent: '<strong>'+json.data[j].location.name+'</strong><br />' +json.data[j].caption.text +  '<br /><a href="'+json.data[j].link+'" target="_blank"><img src="'+json.data[j].images.thumbnail.url+'" /></a>'},
+            {
+              iconLayout: 'default#image',
+              iconImageHref: 'instagram-icon-map.png',
+              iconImageSize: [30, 30],
+              iconImageOffset: [-15, -15]
+          }));
+
+  out += '<li style="display: inline-block; padding: 25px"><a href="'+json.data[j].link+'" target="_blank"><img src="'+json.data[j].images.thumbnail.url+'" /></a></li>';
+
+  }
+
+
+
+    out += '</ul>';
+
+    $("#add_img").html(out);
+
+    myMap.geoObjects.add(myCollection);
+
+  		myMap.setBounds(myCollection.getBounds());
+
+
+              // Масштабируем карту на область видимости геообъекта.
+              myMap.setBounds(bounds, {
+                  checkZoomRange: true // проверяем наличие тайлов на данном масштабе.
+              });
+
+
+   });
+
+
+
+
+
+   $("#coordsearch").click(function () {
+
+     var lat = $('input[name="search_latitude"]').val();
+     var lon = $('input[name="search_longitude"]').val();
+
+   // 1. Создаём новый объект XMLHttpRequest
+       var xhr = new XMLHttpRequest();
+
+
+       //https://api.instagram.com/v1/locations/search?lat=48.858844&lng=2.294351&access_token=ACCESS-TOKEN
+       var str = 'https://api.instagram.com/v1/locations/search?lat=' + lat + '&lng=' + lon + "&access_token=4723090197.a973d3c.5aea6d57347245e382dcb716401126c4";
+
+       // 2. Конфигурируем его
+       xhr.open('GET', str, false);
+
+         // 3. Отсылаем запрос
+       xhr.send();
+
+
+       var json = JSON.parse(xhr.responseText);
+
+       var out = '<ul>';
+       myCollection.removeAll();
+
+
+       myCollection.add(new ymaps.Placemark([lat, lon], {
+         balloonContent: x + ' ' + y + '<br/>'},
+       {
+         iconLayout: 'default#image',
+         iconImageHref: 'marker_endpoint.png',
+         iconImageSize: [30, 30],
+         iconImageOffset: [-15, -15]
+     }));
+
+
+       for (j = 0; j < json.data.length; j++) {
+
+             var location_id = json.data[j].id;
+             var x = json.data[j].latitude;
+             var y = json.data[j].longitude;
+             var location_name = json.data[j].name;
+
+//https://api.instagram.com/v1/locations/{location-id}/media/recent?access_token=ACCESS-TOKEN
+
+             myCollection.add(new ymaps.Placemark([x, y], {
+               balloonContent: '<strong>'+location_name+'</strong><br/>' + x + '|' + y + '<br/>' + location_id},
+             {
+               iconLayout: 'default#image',
+               iconImageHref: 'marker.png',
+               iconImageSize: [15, 15],
+               iconImageOffset: [-15, -15]
+           }));
+
+     }
+
+
+
+     myMap.geoObjects.add(myCollection);
+
+   		myMap.setBounds(myCollection.getBounds());
+
+
+               // Масштабируем карту на область видимости геообъекта.
+               myMap.setBounds(bounds, {
+                   checkZoomRange: true // проверяем наличие тайлов на данном масштабе.
+               });
+
+
+    });
+
+
+
+
+
+
+
+
+	$("#searchmap").click(function () {
+
+	var address = $('input[name="search_address"]').val();
+
+
+	ymaps.geocode(address, {results: 1 }).then(function (res) {
+            var firstGeoObject = res.geoObjects.get(0),
+                // Координаты геообъекта.
+				coord_lat = firstGeoObject.geometry.getCoordinates()[0],
+				coord_lon = firstGeoObject.geometry.getCoordinates()[1],
+
+                // Область видимости геообъекта.
+                bounds = firstGeoObject.properties.get('boundedBy');
+
+
+
+
+        // 1. Создаём новый объект XMLHttpRequest
+        		var xhr = new XMLHttpRequest();
+
+        		var str = 'https://api.instagram.com/v1/locations/search?lat=' + coord_lat + '&lng=' + coord_lon + '&access_token=4723090197.113e5c3.efa85fe179ab4e8f9a5280b1f080d9d4&distance=5000';
+
+
+
+        		// 2. Конфигурируем его
+        		xhr.open('GET', str, false);
+
+		          // 3. Отсылаем запрос
+        		xhr.send();
+
+
+
+      var json = JSON.parse(xhr.responseText);
+
+
+
+      var out = '<ul>';
+      myCollection.removeAll();
+
+
+			for (i = 0; i < json.data.length; i++) {
+
+        var loc_name = json.data[i].name;
+        var id = json.data[i].id;
+        var x1 = json.data[i].latitude;
+        var y1 = json.data[i].longitude;
+
+        myCollection.add(new ymaps.Placemark([x1, y1], {
+          balloonContent: loc_name},
+        {
+          iconLayout: 'default#image',
+          iconImageHref: 'marker.png',
+          iconImageSize: [30, 30],
+          iconImageOffset: [-15, -15]
+      }));
+
+        var xhr2 = new XMLHttpRequest();
+
+        var str2 = 'https://api.instagram.com/v1/locations/'+ id + '/media/recent?access_token=4723090197.113e5c3.efa85fe179ab4e8f9a5280b1f080d9d4&distance=5000';
+
+
+
+        // 2. Конфигурируем его
+        xhr2.open('GET', str2, false);
+
+          // 3. Отсылаем запрос
+        xhr2.send();
+
+
+
+        var json2 = JSON.parse(xhr2.responseText);
+
+        for (j = 0; j < json2.data.length; j++) {
+
+              var x = json2.data[j].location.latitude;
+              var y = json2.data[j].location.longitude;
+
+              myCollection.add(new ymaps.Placemark([x, y], {
+        		    balloonContent: '<strong>'+json2.data[j].location.name+'</strong><br />' +json2.data[j].user.full_name + '<br /><a href="'+json2.data[j].link+'" target="_blank"><img src="'+json2.data[j].images.thumbnail.url+'" /></a>'},
+        			{
+                iconLayout: 'default#image',
+                iconImageHref: 'instagram-icon-map.png',
+                iconImageSize: [30, 30],
+                iconImageOffset: [-15, -15]
+            }));
+
+out += '<li style="display: inline-block; padding: 25px"><a href="'+json2.data[j].link+'" target="_blank"><img src="'+json2.data[j].images.thumbnail.url+'" /></a></li>';
+
+        }
+
+
+
+
+	}
+
+  out += '</ul>';
+
+  $("#add_img").html(out);
+
+  myMap.geoObjects.add(myCollection);
+
+		myMap.setBounds(myCollection.getBounds());
+
+
+            // Масштабируем карту на область видимости геообъекта.
+            myMap.setBounds(bounds, {
+                checkZoomRange: true // проверяем наличие тайлов на данном масштабе.
+            });
+
+
+ });
+
+});
+
+
+}
+</script>
+
+</head>
+
+<body>
+
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">Instagram на Яндекс.Карте</a>
+        </div>
+        <div class="collapse navbar-collapse">
+        	<div class="col-lg-3">
+          <div class="input-group custom-search-form">
+              <input type="text" class="form-control" name="search_address">
+              <span class="input-group-btn">
+              <button id="searchmap" class="btn btn-default" type="button">
+              <span class="glyphicon glyphicon-search"></span>
+             </button>
+             </span>
+             </div><!-- /input-group -->
+        </div>
+        </div>
+        </div><!--/.nav-collapse -->
+      </div>
+
+
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+        <div class="col-xs-6">
+        	<div id="map" style="width: 100%; height: 800px;"></div>
+        </div>
+        <div class="col-xs-6">
+        <div id="add_img" class="row">
+        </div>
+
+        </div>
+      </div>
+
+    </div><!-- /.container -->
+
+    <div class="container">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">Поиск по тегу</a>
+      </div>
+      <div class="collapse navbar-collapse">
+        <div class="col-lg-3">
+        <div class="input-group custom-search-form">
+            <input type="text" class="form-control" name="search_hash">
+            <span class="input-group-btn">
+            <button id="hashsearch" class="btn btn-default" type="button">
+            <span class="glyphicon glyphicon-search"></span>
+           </button>
+           </span>
+           </div><!-- /input-group -->
+      </div>
+      </div>
+      </div><!--/.nav-collapse -->
+
+
+
+          <div class="container">
+            <div class="navbar-header">
+              <a class="navbar-brand" href="#">Поиск по координатам</a>
+            </div>
+            <div class="collapse navbar-collapse">
+              <div class="col-lg-3">
+              <div class="input-group custom-search-form">
+                  <input type="text" class="form-control" name="search_latitude">
+                  <input type="text" class="form-control" name="search_longitude">
+                  <span class="input-group-btn">
+                  <button id="coordsearch" class="btn btn-default btn-additional" type="button">
+                  <span class="glyphicon glyphicon-search"></span>
+                 </button>
+                 </span>
+                 </div><!-- /input-group -->
+            </div>
+            </div>
+            </div><!--/.nav-collapse -->
+
+
+</body>
+</html>

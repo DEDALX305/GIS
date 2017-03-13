@@ -1,0 +1,365 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html>
+	<head>
+		<title>RuWeb.net - Аккаунт заблокирован</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta http-equiv="Content-Language" content="ru" />
+		<meta name="keywords" content="хостинг веб сайт домен бесплатный месяц">
+		<meta name="description" content="Недорогой надежный хостинг и KVM VDS на SSD в Москве по низким ценам и гибким тарифам.  Регистрация доменов и SSL сертификатов. ">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+		<link rel="stylesheet" href="/style.css" >
+		<link rel="stylesheet" href="/new_style.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+		<!--script src="/js/jquery.min.js"></script-->
+		<script src="/js/jquery.mousewheel.js"></script>
+		<script src="/js/jquery.jscrollpane.min.js"></script>
+		<script src="/js/jclever.min.js"></script>
+		<script src="https://www.google.com/recaptcha/api.js"></script>
+		<script type="text/javascript">
+			var switchClick=false;
+			jQuery(function ($){
+				$("a.mn_click").click(function(){
+					$("div.primary-front-menu").hide();
+					$("div#sub_"+this.id).show();
+					showPin(this.id);
+					if (this.id=='mn6') goURL('http://forum.ruweb.net/');
+		   		});
+				jQuery('.hosting-in form, .domain-check-form, .calc-form').jClever({applyTo:{select:true,checkbox:true,button:false},'applyTo.button':false});
+//				jQuery('form.domain-whois-form').jClever({autoTracking: true,autoInit: true});
+
+				jQuery('.jclever').jClever();
+//				$('.hosting-in form .jClever-element-select-right ').html('<img src="/imgs/select-dropdown.png" alt="" />');
+//				$('.hosting-in form select').wrap('<div class="hide-el">');
+//				$('.main-menu ul ul').each(function (){
+//					var posl=$(this).parent().position();
+//					$(this).css('left',posl.left+"px");
+//				});
+
+			$("div.input-mod").mouseup(function() {
+			    deSelectAll();
+			});
+			$("div.switch").mouseup(function() {
+			    switchClick = false;
+			    deSelectAll();
+			});
+			$(document).mouseup(function(){
+				switchClick = false;
+			});
+			$("div.switch").mousedown(function() {
+			    switchClick = true;
+			});
+			$("div.switch").mouseleave(function() {
+				if (!switchClick) return;
+				switchClick = false;
+				if (jQuery(this).children("div:first").hasClass('focused')) {
+					jQuery(this).find("input:first").click();
+				}
+			});
+
+			// Login Form
+			    var button = $('#loginButton');
+			    var button = $('#billing');
+			    var box = $('#loginBox');
+			    var form = $('#loginForm');
+//			    button.removeAttr('href');
+			    button.mouseup(function(login) {
+			        box.toggle();
+			        button.toggleClass('active');
+			    });
+			    form.mouseup(function() { 
+			        return false;
+			    });
+			    $(this).mouseup(function(login) {
+			        if(!($(login.target).parent('#loginButton').length > 0)) {
+			            button.removeClass('active');
+			            box.hide();
+			        }
+			    });
+			// Login Form End
+				$('div.input-mod').click(function() {
+					var div = $(this);
+					var inp = $('#'+div.attr('for'));
+					var val = (div.attr('id')=='input-minus'?-1:1);
+					if (inp) {
+						var step=(inp.attr('step')?inp.attr('step'):1);
+						if ($.isNumeric(inp.val())) {
+							val=parseInt(inp.val())+val*step;
+						} else {
+							val=val*step;
+						}
+						var min=(inp.attr('min')?inp.attr('min'):0);
+						if ((!inp.attr('max') || val<=inp.attr('max')) && val>=min) {
+							if (val==0 && inp.attr('zero')) val=inp.attr('zero');
+							inp.val(val);
+							inp.change();
+						}
+					}
+				});
+
+				$("div.primary-front-menu").find("a[href='" + top.location.pathname + "']").each(function (){
+//					$(this).removeAttr("href");
+					$(this).addClass("active");
+				})
+				$(document).ready(function () {
+										if(typeof window.on_load == 'function') {
+						on_load();
+					}
+				});
+			});
+
+			function deSelectAll() {
+				if (window.getSelection) {
+				  if (window.getSelection().empty) {  // Chrome
+				    window.getSelection().empty();
+				  } else if (window.getSelection().removeAllRanges) {  // Firefox
+				    window.getSelection().removeAllRanges();
+				  }
+				} else if (document.selection) {  // IE?
+				  document.selection.empty();
+				}
+			}
+			function showPin(id){
+					var p=$("a#"+id);
+					margin=parseInt(p.parent().css('marginLeft'));
+					$("div#menu-pin").css({'left': p.position().left-margin-6+p.innerWidth()/2, 'top': $("div.main-menu").innerHeight()-6});
+					$("div#menu-pin").show();
+			}
+			$(function(){
+				$('.scroll-pane').jScrollPane();
+			});
+			function goURL(url){
+				var form=document.getElementById('redirectForm');
+				if (form) {
+					form.action=url;
+					form.submit();
+				} else {
+					document.location.href=url;
+				}
+			}
+			function helpClick(ths){
+				if(navigator.userAgent.toLowerCase().indexOf('opera') != -1 && window.event.preventDefault) window.event.preventDefault();
+				ths.newWindow = window.open('http://webim.ruweb-nn.ru/client.php?locale=ru&url='+escape(document.location.href)+'&referrer='+escape(document.referrer), 'mibew', 'toolbar=0,scrollbars=0,location=0,status=1,menubar=0,width=640,height=480,resizable=1');
+				ths.newWindow.focus();
+				ths.newWindow.opener=window;
+				return false;
+			}
+		</script>
+<!-- Facebook Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1663581433934302'); // Insert your pixel ID here.
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1663581433934302&ev=PageView&noscript=1"
+/></noscript>
+<!-- DO NOT MODIFY -->
+<!-- End Facebook Pixel Code -->	
+	</head>
+	<body>
+		<div class="all-page-wrapper">
+			<div class="head clearfix">
+				<div class="logo">
+					<a href="/">
+					<img src="/imgs/logo.png" alt="" />
+					</a>
+				</div>
+				<div class="menus-and-blocks">
+					<div class="blocks clearfix">
+						<div class="hosting-in">
+							<form id="redirectForm" method=get>
+							<select onchange="goURL(this.value)">
+	<option selected value="http://ruweb.net/">Хостинг В России</option>
+	<option value="https://ruweb.net/billing/">├ Биллинг-система</option>
+	<option value="https://ruweb.net/support/">└ Служба тех.поддержки</option>
+	<option value="http://ruweb.ws/">Хостинг В США</option>
+	<option value="http://forum.ruweb.net/">Форум</option>
+							</select>
+							</form>
+						</div>
+						<div id="billing">
+							<a href="#" id="loginButton"><span>Регистрация и вход<span></a>
+							<div style="clear:both"></div>
+					                <div id="loginBox">                
+        <div class='arrow'></div>
+        <div class='arrow-border'></div>
+					                    <form id="loginForm" action="https://ruweb.net/billing/?do=login" method=post>
+					                        <fieldset id="body">
+					                            <fieldset>
+					                                <label for="email">E-mail</label>
+					                                <input type="text" autocapitalize="off" autocorrect="off" name="login" id="email" />
+					                            </fieldset>
+					                            <fieldset>
+					                                <label for="password">Пароль</label>
+					                                <input type="password" name="password" id="password" />
+					                            </fieldset>
+					                            <!-- fieldset>
+									<div class="g-recaptcha" data-sitekey="6Lfz7g4UAAAAAGsssxFFbzKjE079AzFsyjLv0Ddi"></div>
+					                            </fieldset -->
+
+
+					                            <input type="submit" id="login" value="Войти" />
+					                            <!--label for="checkbox"><input type="checkbox" id="checkbox" checked/>Защищенный режим</label-->
+						                    <span style="float:right"><a href="https://ruweb.net/billing/?do=reminder">Забыли пароль?</a></span>
+					                        </fieldset>
+					                        <span><a href="/order">Регистрация в биллинг-системе</a></span>
+					                    </form>
+					                </div>
+						</div>
+							
+						<div class="skype-phone">
+							<span>Москва:</span> (499) <span class="num">502-44-31</span>
+						</div>
+						<!--div style="position:absolute;color:red"><a href="/move" style="color:red">5 мая производится перенос серверов из ЦОД АО "Датацентр" на площадку ООО "Релком"
+<br>Отключение серверов - с 08:00 МСК. Подключение серверов - с 14:00 МСК до 20:00 МСК</a></div-->
+						
+					</div>
+					<div class="main-menu clearfix">
+						<ul>
+							<li><a id="mn1" class="mn_click">Хостинг</a></li>
+							<li><a id="mn2" class="mn_click">Серверы</a></li>
+							<li><a id="mn3" class="mn_click">Домены</a></li>
+							<li><a id="mn4" class="mn_click">Другие услуги</a></li>
+							<li><a id="mn5" class="mn_click">Информация</a></li>
+							<li><a id="mn6" class="mn_click">Форум</a></li>
+						</ul>
+					<div id="menu-pin"></div>
+					</div>
+					<div class="primary-front-menu clearfix" >
+						<ul>
+							<li><a href="/hosting/unlim">Тарифы с безлимитным трафиком</a></li>
+							
+							<li><a href="/hosting/cms">CMS-тарифы</a></li>
+							<li><a href="/hosting/vip">VIP-тарифы</a></li>
+							<li><a href="/hosting/resell">Тарифы для реселлеров</a></li>   
+							<li><a href="/ssl">SSL-сертификаты</a></li>
+							<li><a href="/domains">Регистрация доменов</a></li>
+							<li><a href="/vds">Виртуальные выделенные серверы (VDS)</a></li>
+							<li><a href="/management">Услуги администрирования</a></li>
+					<li><a href="/ddos">Защита от DDOS</a></li>							<!--li><a href="/partner">Партнерская программа</a></li-->
+						</ul>
+					</div>
+					<div id="sub_mn1" class="primary-front-menu clearfix" style="display:none">
+						<ul>
+							<li><a href="/hosting/unlim">Тарифы с безлимитным трафиком</a></li>
+							
+							<li><a href="/hosting/cms">CMS-тарифы</a></li>
+							<li><a href="/hosting/vip">VIP-тарифы</a></li>
+							<li><a href="/hosting/vds">Виртуальные выделенные серверы (VDS)</a></li>
+							<li><a href="/hosting/resell">Тарифы для реселлеров</a></li> 
+					<li><a href="/hosting/backup">Резервное копирование данных</a></li>							<li><a href="/info/servers">Информация о серверах</a></li>
+						</ul>
+					</div>
+					<div id="sub_mn2" class="primary-front-menu clearfix" style="display:none">
+						<ul>
+							<li><a href="/dedicated">Выделеные серверы</a></li>
+							<li><a href="/vds">Виртуальные выделенные серверы (VDS)</a></li>
+							<li><a href="/management">Услуги администрирования</a></li>
+							<!--li><a href="/info/datacenter">Информация о Датацентре</a></li-->
+						</ul>
+					</div>
+					<div id="sub_mn3" class="primary-front-menu clearfix" style="display:none">
+						<ul>
+							<li><a href="/domains">Цены на регистрацию доменов</a></li>
+							<li><a href="/whois">Проверка доменного имени (Whois)</a></li>
+						</ul>
+					</div>
+					<div id="sub_mn4" class="primary-front-menu clearfix" style="display:none">
+						<ul>
+					<li><a href="/hosting/backup">Резервное копирование данных</a></li>							<li><a href="/ssl">SSL-сертификаты</a></li>
+							<li><a href="/panel">Панели управления</a></li>
+							<li><a href="/management">Услуги администрирования серверов</a></li>
+					<li><a href="/ddos">Защита от DDOS</a></li>							<!--li><a href="/cms">Установка и поддержка CMS</a></li-->
+						</ul>
+					</div>
+					<div id="sub_mn5" class="primary-front-menu clearfix" style="display:none">
+						<ul>
+							<!--li><a href="/news">Новости</a></li-->
+							<li><a href="/info/about">Контактная информация и реквизиты</a></li>
+							<li><a href="/info/tos">Регламент предоставления услуг</a></li>
+							<li><a href="/info/payment">Способы оплаты</a></li>
+							<li><a href="/info/servers">Информация о серверах</a></li>
+							<!--li><a href="/partner">Партнерская программа</a></li-->
+							<li><a href="http://clients.ruweb.net">Наши клиенты</a></li>
+						</ul>
+					</div>
+					<div id="sub_mn6" class="primary-front-menu clearfix" style="display:none;">
+					<ul>
+					</ul>
+					</div>
+						
+				</div>
+			</div>
+<!-- head end --> 
+<center>
+	<h1>Запрашиваемый вами сайт временно заблокирован.</h1>
+	<h1>This account has been suspended.</h1>
+</center>
+	<h2>Возможные причины:</h2>
+	<table border=0 cellspacing=0 cellpadding=0 align=center><tr><td>
+	    <ul><li>Превышение лимита трафика.</li>
+<p class="v11b">В этом случае необходимо увеличить тарифный план в <a href="/billing">биллинге</a>, в разделе "сайты" - "подробно"
+формируете заявку на смену тарифного плана, в разделе "неподтверждённые заявки" в этой заявке будет рассчитана сумма доплаты необходимая для смены тарифа.
+Если в чём-то ошиблись, то данную заявку можете удалить и сформировать другую. Если в сформированной заявке всё правильно - подтверждайте её, при необходимости пополняйте баланс.</p>
+		<li>Закончился оплаченный период. &nbsp; &nbsp; </li>
+<p class="v11b">Продлите срок действия сайта <a href="/billing">в биллинге</a> в разделе "сайты" - "подробно" укажите необходимое количество месяцев для продления и нажмите "продлить", сформированную заявку подтвердите в разделе "неподтверждённые заявки", при необходимости <a href="/info/payment">пополните баланс</a> любым удобным способом в разделе "баланс".</p>
+<p>Рекомендуем включить <a href="http://help.ruweb.net/sms">бесплатное SMS уведомление об изменении статуса услуг</a>.</p>
+		<li>Нарушение правил хостинга.</li>
+	    </ul>
+	<p class="v11b">Если возникли дополнительные вопросы - пишите в <a href="/support">службу технической поддержки</a>.</p>
+	</td></tr></table>
+<!-- footer start -->
+			<div class="footer clearfix">
+				<div class="logo-in-footer">
+					<a href="#"><img src="/imgs/logo-footer.png" alt="" /></a>
+				</div>
+				<div class="phones">
+					<table>
+						<tr>
+							<td class="titl">Телефоны:</td>
+                                                        <td class="num"><span>(499)</span> 502-44-31</td><td class="gorod">Москва</td>
+						</tr>
+						<tr>
+							<td></td>
+                                                        <td class="num"><span>(812)</span> 336-42-55</td><td class="gorod">С.-Петербург</td>
+						</tr>
+						<tr>	
+							<td></td><td class="num"><span>(831)</span> 411-12-44</td><td class="gorod">Н.Новгород</td>
+						</tr>
+						<tr>	
+							<td></td><td class="num"><span>(343)</span> 204-71-16</td><td class="gorod">Екатеринбург</td>
+						</tr>
+							 
+                	
+                
+						
+					</table>
+				</div>
+	<div class="online-helper"><a href="http://webim.ruweb-nn.ru/client.php?locale=ru" target="_blank" onclick="helpClick(this)">Онлайн поддержка</a><div class="uho"></div></div> 			</div>
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">(function (d, w, c) { (w[c] = w[c] || []).push(function() { try { w.yaCounter22587808 = new Ya.Metrika({id:22587808, webvisor:true, clickmap:true, trackLinks:true, accurateTrackBounce:true}); } catch(e) { } }); var n = d.getElementsByTagName("script")[0], s = d.createElement("script"), f = function () { n.parentNode.insertBefore(s, n); }; s.type = "text/javascript"; s.async = true; s.src = (d.location.protocol == "https:" ? "https:" : "http:") + "//mc.yandex.ru/metrika/watch.js"; if (w.opera == "[object Opera]") { d.addEventListener("DOMContentLoaded", f, false); } else { f(); } })(document, window, "yandex_metrika_callbacks");</script><noscript><div><img src="//mc.yandex.ru/watch/22587808" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+<!-- VK -->
+<script type="text/javascript">(window.Image ? (new Image()) : document.createElement('img')).src = location.protocol + '//vk.com/rtrg?r=V6nyfzo1ZQnrMTp68euqyDOFCDcjESf*s0japHhxpnsOTN2tBAsz2nE5G6KIjZOnEYbH6CpvfCZrM9eFhX5ylDC7FjSx6sAm/tLTpb8OkWQKvtV0lBfJIt2dbPFz2y0qIfANbUtuWPxhFoDf8H6CSdpRPgLsgkEBP4mx5Dk1CEc-&pixel_id=1000038412';</script>
+<!-- /VK -->
+<!-- Ga -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-589730-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+<!-- /Ga -->
+
+
+		</div>
+	</body>
+</html>

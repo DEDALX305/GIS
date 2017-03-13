@@ -1,0 +1,193 @@
+/* All Responsive
+================================================== */
+@media only screen and (max-width: 959px) { 
+	/*navigation*/
+	#navigation .selector {
+	    display: -moz-inline-box; display: inline-block; display: inline; position: relative;
+	    height: 40px;
+		width: 25px;
+	    margin: 0; padding: 0;
+	    border: none;
+	    cursor: pointer !important;
+	    vertical-align: middle;
+	    zoom: 1;
+	}
+	    #navigation .selector option {
+	        color: #444;
+	        -webkit-appearance: none;
+	        background: #fff;
+	    }
+	#navigation .selector:before {
+	    display: block; position: absolute;
+	    left: 0; top: 50%;
+	    margin-top: -9px;
+	    color: #000;
+	    font-size: 18px; font-weight: normal;
+	    font-style: normal;
+	    text-align: left; text-decoration: inherit;
+	    -webkit-font-smoothing: antialiased;
+	    content: "\f0c9";
+	    font-family: FontAwesome;
+	    line-height: 18px;
+	    line-height: normal;
+	    vertical-align: baseline;
+	}
+	#navigation .selector select {
+	    position: absolute;
+	    left: 0; top: 0px;
+	    height: 45px; width: 45px;
+	    background: none;
+	    cursor: pointer;
+	}
+	#navigation .selector select:focus {
+	    outline: 0
+	}
+	#navigation .selector:hover {
+	    -moz-opacity: 1;
+	    -webkit-opacity: 1;
+	    opacity: 1;
+	}
+	#navigation .selector span {
+	    display: block;
+	    text-indent: -9999px;
+	    overflow: hidden;
+	    text-overflow: ellipsis;
+	    white-space: nowrap;
+	}
+	#navigation .selector {
+	    display: inline-block
+	}
+	#navigation ul {
+	    display: none
+	}
+	/*navigation-secondary*/
+	#navigation-secondary .selector {
+	    display: -moz-inline-box; display: inline-block; display: inline; position: relative;
+	    height: 55px;
+		width: 100%;
+	    margin: 0;
+		padding: 0;
+		color: #000;
+		font-weight: 600;
+	    text-indent: 30px;
+	    border: none;
+	    cursor: pointer !important;
+	    line-height: 55px;
+	    vertical-align: middle;
+	    zoom: 1;
+	}
+	    #navigation-secondary .selector select {
+	        position: absolute;
+	        left: 0; top: 0px;
+	        height: 55px;
+			width: 100%;
+	        background: none;
+	        cursor: pointer;
+	    }
+	    #navigation-secondary .selector select:focus {
+	        outline: 0
+	    }
+	#navigation-secondary .selector:before {
+	    display: block; position: absolute;
+	    left: -30px; top: 50%;
+	    margin-top: -9px;
+	    color: #000;
+	    font-size: 18px; font-weight: normal;
+	    font-style: normal;
+	    text-align: left; text-decoration: inherit;
+	    -webkit-font-smoothing: antialiased;
+	    content: "\f0c9";
+	    font-family: FontAwesome;
+	    line-height: 18px;
+	    line-height: normal;
+	    vertical-align: baseline;
+	}
+	#navigation-secondary .selector option {
+	    -webkit-appearance: none
+	}
+	#navigation-secondary .selector:hover {
+	    -moz-opacity: 1;
+	    -webkit-opacity: 1;
+	    opacity: 1;
+	}
+	#navigation-secondary .selector span {
+	    display: block;
+	    overflow: hidden;
+	    text-overflow: ellipsis;
+	    white-space: nowrap;
+	}
+	#navigation-secondary .selector {
+	    display: inline-block
+	}
+	#navigation-secondary ul {
+	    display: none
+	}
+	.comment-avatar {
+	    float: none;
+	    margin-bottom: 15px
+	}
+	.comment-content {
+	    margin-left: 0
+	}
+	#commentsbox [class*="depth-"] .comment-details {
+	    margin-left: 0
+	}
+}
+/* Smaller then tablet portrait
+================================================== */
+@media only screen and (max-width: 767px) { 
+	#header-ad {
+	    float: none;
+	    margin-top: 20px;
+	    text-align: left
+	}
+	#sidebar {
+	    margin-top: 50px;
+	    padding: 0
+	}
+	#footer-menu ul {
+	    float: left;
+	    margin-top: 10px
+	}
+	    #footer-menu ul li {
+	        margin-left: 0; margin-right: 10px
+	    }
+}
+/* Ipad Mini Portrait Edits
+================================================== */
+@media only screen and (min-device-width:768px) and (max-device-width:1024px) and (orientation:portrait) { 
+	.att-one-half, .att-one-third, .att-two-third, .att-three-fourth, .att-one-fourth, .att-one-fifth, .att-two-fifth, .att-three-fifth, .att-four-fifth, .att-one-sixth, .att-five-sixth {
+	    float: none;
+	    width: 100%;
+	    margin-bottom: 20px; margin-right: 0
+	}
+	.att-pricing-table > div {
+	    margin-bottom: 25px
+	}
+	.att-box, .att-box.left, .att-box.right {
+	    float: none;
+	    width: 100% !important
+	}
+}
+/* Mobile (Portrait)
+================================================== */
+@media only screen and (max-width: 767px) { 
+	/*shortcodes*/
+	.att-one-half, .att-one-third, .att-two-third, .att-three-fourth, .att-one-fourth, .att-one-fifth, .att-two-fifth, .att-three-fifth, .att-four-fifth, .att-one-sixth, .att-five-sixth {
+	    float: none;
+	    width: 100%;
+	    margin-bottom: 20px; margin-right: 0
+	}
+	.att-pricing-table > div {
+	    margin-bottom: 25px
+	}
+	.att-box, .att-box.left, .att-box.right {
+	    float: none;
+	    width: 100% !important
+	}
+}
+/* Mobile (Landscape)
+================================================== */
+@media only screen and (min-width: 480px) and (max-width: 767px) { 
+	
+}

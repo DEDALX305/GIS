@@ -1,0 +1,152 @@
+if (!window.KAMENT_COUNTER) window.KAMENT_COUNTER = {};
+KAMENT_COUNTER.anchor_name = 'kament_comments';
+KAMENT_COUNTER.attribute_name = 'data-kament-name';
+KAMENT_COUNTER.kament_domain = 'svkament.ru';
+KAMENT_COUNTER.links = undefined;
+//KAMENT_COUNTER.names = undefined;
+
+/* Check if string ends with suffix */
+KAMENT_COUNTER.endsWith = function (str, suffix) {
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
+KAMENT_COUNTER.formatUrlName = function(link_node) {
+	var search_part = link_node.search;
+	if(search_part) {
+		if(search_part.charAt(0) == '?')
+			search_part = search_part.substring(1); 
+
+		var search_arr = search_part.split('&');
+		search_arr.sort();
+
+		search_part = '?' + search_arr.join('&');
+	}
+
+	var url = link_node.protocol + '//' + link_node.hostname + link_node.pathname;
+	if(link_node.port)
+		url += ':' + link_node.port;
+
+	url += search_part; 
+
+	return url.toLowerCase();
+}
+
+KAMENT_COUNTER.collectNames = function()
+{
+	var names = {
+		'url': [], // urls
+		'name' : [] // identifiers
+		};
+	var links=document.getElementsByTagName("a");
+	var counter_links = Array();
+	var counter_links_with_name = Array();
+
+	for(var i = 0; i < links.length; i++) {
+		var l = links[i];
+		if(this.endsWith(l.href, this.anchor_name)) {
+			var data_attr = l.getAttribute(this.attribute_name);
+			if(data_attr) {
+				names['name'].push(data_attr);
+				counter_links_with_name.push(l);
+			}
+			else {
+				names['url'].push(this.formatUrlName(l));
+				counter_links.push(l);
+			}
+
+		}
+	}
+
+	//this.links_url = counter_links;
+	//this.links_name = counter_links_with_name;
+
+	return names;
+}
+
+KAMENT_COUNTER.requestData = function(names)
+{
+
+	var params = '';
+	for(var i = 0; i < names['url'].length; i++) {
+		params += 'url[' + i + ']=' + encodeURIComponent( names['url'][i] );
+		if(names['url'].length > i+1)
+			params += '&';
+	}
+
+	if(params && names['name'].length)
+		params += '&';
+
+	for(var i = 0; i < names['name'].length; i++) {
+		params += 'name[' + i + ']=' + encodeURIComponent( names['name'][i] );
+		if(names['name'].length > i+1)
+			params += '&';
+	}
+
+	var s = document.createElement('script'); s.async = true;
+	s.type = 'text/javascript';
+	s.src = 'http://' + kament_subdomain + '.' + this.kament_domain + '/counter?'+params;
+	(document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+}
+
+KAMENT_COUNTER.declOfNum = function(number, titles) {  
+    cases = [2, 0, 1, 1, 1, 2];  
+    return titles[ (number%100>4 && number%100<20)? 2 : cases[(number%10<5)?number%10:5] ];  
+}
+
+KAMENT_COUNTER.setCounterData = function(node, value)
+{
+	if(!KAMENT_COUNTER.settings)
+		return;
+	if(value === undefined)
+		return;
+
+	var str = KAMENT_COUNTER.settings[0];
+	if(value > 0)
+		str = this.declOfNum(value, KAMENT_COUNTER.settings.slice(1,4));
+
+	var str=str.replace(/{NUM}/g, value);
+	node.innerHTML = str;
+}
+
+KAMENT_COUNTER.requestCallback = function(data)
+{
+	if(!data || !data['settings'] || !data['names_data'] || !data['urls_data'])
+		return;
+
+	KAMENT_COUNTER.settings = data['settings'];
+
+	console.log('processing counter data');
+
+
+	var links=document.getElementsByTagName("a");
+
+	for(var i = 0; i < links.length; i++) {
+		var l = links[i];
+		if(this.endsWith(l.href, this.anchor_name)) {
+			var data_attr = l.getAttribute(this.attribute_name);
+
+			if(data_attr) {
+				var count = (data['names_data'][data_attr] ? data['names_data'][data_attr] : 0);
+				this.setCounterData(l, count);
+			} else {
+				var url = this.formatUrlName(l);
+				var count  = (data['urls_data'][url] ? data['urls_data'][url] : 0);
+				this.setCounterData(l, count);
+			}
+
+		} // if counter link
+
+	} //for all links
+}
+
+/* Process page and update links with counters */
+KAMENT_COUNTER.process = function()
+{
+	names = this.collectNames();
+	if(names['name'].length == 0 && names['url'].length == 0)
+		return;
+
+	this.requestData(names);
+}
+
+KAMENT_COUNTER.process();

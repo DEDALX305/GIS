@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru" >
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Фото Instagram на Яндекс.Карте</title>
+<link href="http://yandex.st/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+<script src="http://yandex.st/jquery/1.8.0/jquery.min.js"></script>
+<script src="http://yandex.st/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script src="http://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+
+<style>
+body, html {
+            padding:0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+}
+		
+body {
+  padding-top: 50px;
+}
+
+.custom-search-form{
+    margin-top:5px;
+}
+
+</style>
+
+<script type="text/javascript">
+var myMap;
+ 
+// Дождёмся загрузки API и готовности DOM.
+ymaps.ready(init);
+ 
+function init () {
+    // Создание экземпляра карты и его привязка к контейнеру с
+    // заданным id ("map").
+    myMap = new ymaps.Map('map', {
+        // При инициализации карты обязательно нужно указать
+        // её центр и коэффициент масштабирования.
+        center: [56.326944, 44.0075], // Нижний Новгород
+        zoom: 12,
+		controls: ['zoomControl', 'typeSelector']
+    }); 
+	
+	var myCollection = new ymaps.GeoObjectCollection();
+	
+	$("#searchmap").click(function () {
+	
+	var address = $('input[name="search_address"]').val();
+	
+	ymaps.geocode(address, {results: 1 }).then(function (res) {            
+            var firstGeoObject = res.geoObjects.get(0),
+                // Координаты геообъекта.
+				coord_lat = firstGeoObject.geometry.getCoordinates()[0],
+				coord_lon = firstGeoObject.geometry.getCoordinates()[1],
+				
+                // Область видимости геообъекта.
+                bounds = firstGeoObject.properties.get('boundedBy');
+				
+			$.getJSON("zapros.php", {lat: coord_lat, lon: coord_lon}, function(json){	
+			var out = '<ul>';
+			
+			myCollection.removeAll();
+			
+			for (i = 0; i < json.data.length; i++) {
+			
+			myCollection.add(new ymaps.Placemark([json.data[i].location.latitude,json.data[i].location.longitude], {           
+		    balloonContent: '<strong>'+json.data[i].location.name+'</strong><br /><a href="'+json.data[i].link+'" target="_blank"><img src="'+json.data[i].images.thumbnail.url+'" /></a>'},
+			{
+        iconLayout: 'default#image',
+        iconImageHref: 'instagram-icon-map.png',
+        iconImageSize: [30, 30],
+        iconImageOffset: [-15, -15]
+    }));
+			
+			
+		out += '<li style="display: inline-block; padding: 25px"><a href="'+json.data[i].link+'" target="_blank"><img src="'+json.data[i].images.thumbnail.url+'" /></a></li>';		
+	}	
+		out += '</ul>';
+		
+		$("#add_img").html(out);
+	
+		myMap.geoObjects.add(myCollection);	
+		
+		myMap.setBounds(myCollection.getBounds());
+			});
+
+            // Масштабируем карту на область видимости геообъекта.
+            myMap.setBounds(bounds, {
+                checkZoomRange: true // проверяем наличие тайлов на данном масштабе.
+            });
+
+
+ });
+
+});	
+	
+	   
+}
+</script>
+
+</head>
+
+<body>
+
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">          
+          <a class="navbar-brand" href="#">Instagram на Яндекс.Карте</a>
+        </div>
+        <div class="collapse navbar-collapse">
+        	<div class="col-lg-3">
+          <div class="input-group custom-search-form">
+              <input type="text" class="form-control" name="search_address">
+              <span class="input-group-btn">
+              <button id="searchmap" class="btn btn-default" type="button">
+              <span class="glyphicon glyphicon-search"></span>
+             </button>
+             </span>
+             </div><!-- /input-group -->
+        </div>
+        </div>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+        <div class="col-xs-6">
+        	<div id="map" style="width: 100%; height: 800px;"></div>
+        </div>
+        <div class="col-xs-6">
+        <div id="add_img" class="row">   
+        </div>
+        
+        </div>
+      </div>
+
+    </div><!-- /.container -->
+</body>
+</html>

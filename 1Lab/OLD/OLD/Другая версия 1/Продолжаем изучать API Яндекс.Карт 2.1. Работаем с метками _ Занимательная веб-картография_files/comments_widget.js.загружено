@@ -1,0 +1,4193 @@
+// IE < 9 workaround
+if (!Object.keys) {
+  Object.keys = function(obj) {
+    var keys = [];
+
+    for (var i in obj) {
+      if (obj.hasOwnProperty(i)) {
+        keys.push(i);
+      }
+    }
+
+    return keys;
+  };
+}
+
+Object.size = function(obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+
+function isScrolledIntoView(elem)
+{
+	var $elem = $(elem);
+	if(!$elem.length) return;
+
+	var docViewTop = Comments.viewport_position['top'];
+	var docViewBottom = Comments.viewport_position['bottom'];
+
+	var elemTop = $elem.offset().top;
+	var elemBottom = elemTop + $elem.height();
+
+	return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
+}
+
+function isBelowCurrentView(elem)
+{
+	var docViewTop = Comments.viewport_position['top'];
+	var docViewBottom = Comments.viewport_position['bottom'];
+
+	var elemTop = $(elem).offset().top;
+	var elemBottom = elemTop + $(elem).height();
+	return elemBottom > docViewBottom;
+}
+
+function isFunction(functionToCheck) {
+	var getType = {};
+	return functionToCheck && getType.toString.call(functionToCheck) == '[object Function]';
+}
+
+/*склонение числительных
+ * titles - [секунда,секунды,секунд]
+ */
+function declOfNum(number, titles) {  
+    cases = [2, 0, 1, 1, 1, 2];  
+    return titles[ (number%100>4 && number%100<20)? 2 : cases[(number%10<5)?number%10:5] ];  
+}
+
+function htmlEncode(value){
+  //create an in-memory div, set it's inner text(which jQuery automatically encodes)
+  //then grab the encoded contents back.  This div never exists on the page.
+  return $('<div/>').text(value).html();
+}
+
+function htmlDecode(value){
+  return $('<div/>').html(value).text();
+}
+
+/*
+ * if date2_string not set -> use current time
+ */
+function days_between(date1_string, date2_string) {
+	if(!date1_string)
+		return undefined;
+	/* Firefox fix */
+	date1_string = date1_string.replace(' ', 'T');
+	if(date2_string) date2_string = date2_string.replace(' ', 'T');
+
+	var date1 = new Date(date1_string);
+	var date2 = date2_string ? new Date(date2_string) : new Date();
+
+    var ONE_DAY = 1000 * 60 * 60 * 24
+
+    return Math.round( Math.abs(date1.getTime() - date2.getTime()) / ONE_DAY)
+}
+
+function hlElement($e) {
+	var originalColor = $e.css('backgroundColor');
+	$e.css('backgroundColor', 'yellow');
+	setTimeout(function(){
+		$e.css('backgroundColor', originalColor);
+	},500);
+}
+
+function timeSinceString(date_string) {
+	var prevTime = new Date(date_string);
+	if(!prevTime || isNaN(prevTime.getTime()) ) {
+		date_string = date_string.replace(/-/g, '/');
+		prevTime = new Date(date_string);
+	}
+
+
+	var thisTime = new Date();
+	var seconds_passed = parseInt((thisTime.getTime() - prevTime.getTime())/1000);
+
+	// we assume that date_string cant be in the future
+	// "0 seconds since" looks ugly, so we also set it to be 1
+	if(seconds_passed <= 0)
+		seconds_passed = 1;
+
+	var time_string = '';
+
+	if(seconds_passed < 60) {
+		// seconds ago
+		//time_string = seconds_passed + ' ' + Comments.dt(seconds_passed, 'seconds ago');
+		time_string = Comments.t('Right now');
+
+	} else if (seconds_passed > 60 && seconds_passed < 3600) {
+		//minutes ago
+		var minutes = seconds_passed/60;
+		time_string = parseInt(seconds_passed/60) + ' ' + Comments.dt(parseInt(seconds_passed/60), 'minutes ago');
+	} else if (seconds_passed >= 3600 && seconds_passed < 3600*4) {
+		// (1|2|3) hours ago
+		var hours = parseInt(seconds_passed/3600);
+		if( hours == 1)
+			time_string = Comments.t('An hour ago');
+		if( hours == 2)
+			time_string = Comments.t('Two hours ago');
+		if( hours == 3)
+			time_string = Comments.t('Three hours ago');
+	} else if (seconds_passed >= 3600*4) {
+		//today, yesterday, this year, not this year
+
+		var prev_month   = prevTime.getMonth();
+		var prev_date    = prevTime.getDate();
+		var prev_year    = prevTime.getFullYear();
+		var prev_hours   = prevTime.getHours();
+		var prev_minutes = prevTime.getMinutes() < 10 ? '0'+prevTime.getMinutes() : prevTime.getMinutes();
+
+		var this_year = thisTime.getFullYear();
+		var this_month = thisTime.getMonth();
+		var this_date = thisTime.getDate();
+
+		var today_started = new Date(this_year, this_month, this_date);
+		today_started = parseInt( today_started.getTime()/1000 );
+
+		var prev_time_seconds = parseInt(prevTime.getTime()/1000);
+
+		//if(prev_date_day_started == today_started) {
+		var time_substring = Comments.t('at') + ' ' + prev_hours + ':' + prev_minutes;
+		if(prev_time_seconds >= today_started) {
+			//today
+			time_string = Comments.t('today') + ' ' + time_substring;
+		} else if ( prev_time_seconds >= (today_started - 3600*24) ) {
+			// yesterday
+			time_string = Comments.t('yesterday') + ' ' + time_substring;
+		} else { // ( prev_year == this_year ) {
+			
+			// we calc not from the moment event happend in the past, but from the DAY WHEN this event happened
+			var prev_started = new Date(prev_year, prev_month, prev_date);
+			prev_started = parseInt( prev_started.getTime()/1000 );
+			var days_passed = parseInt( (today_started - prev_started) / (3600*24) );
+
+
+			if(days_passed <= 30 ) {
+				//days ago
+				time_string = days_passed + ' ' + Comments.dt(days_passed, 'days ago');
+			} else if (days_passed > 30 && days_passed < 360) {
+				//months ago
+				var months_passed = parseInt(days_passed/30);
+				time_string = months_passed + ' ' + Comments.dt(months_passed, 'months ago');
+			} else {
+				//years ago
+				var years = parseInt(days_passed/360);
+
+				if(years == 1)
+					time_string = Comments.t('a year ago');
+				else if(years == 2)
+					time_string = Comments.t('2 years ago');
+				else if(years == 3)
+					time_string = Comments.t('3 years ago');
+				else if(years == 4)
+					time_string = Comments.t('4 years ago');
+				else if(years >= 5)
+					time_string = years + ' ' + Comments.t('years ago');
+			}
+
+		} 
+	}
+
+	return time_string;
+}
+
+function trim (str) {
+    return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+}
+
+
+function fillUpTemplate(html, data) {
+	// process data
+	html = html.replace( new RegExp('%([a-z0-8_-]*?)%', 'gi'), function(m,g) { return data[g]; });	
+	// process translations
+	html = html.replace(new RegExp('\{\{(.*?)\}\}', 'g'), function(m,g) { return Comments.t(g); });
+
+	return html;
+}
+
+function YandexMetricaGoal(name) {
+	try {
+		if(window['yaCounter18478273'] != 'undefined')
+			yaCounter18478273.reachGoal(name);
+	}
+	catch (e) {
+	   console.log(e);
+	}
+}
+/*-------------------------------------------------------------------*/
+// Attach image section 
+var AttachImage = {};
+AttachImage.Init = function()
+{
+	var html = AttachImage.getHTML();
+	$("section#alt_section").html(html);
+	AttachImage.bindEvents();
+}
+
+AttachImage.open = function(reply_box)
+{
+	this.reply_box = reply_box;
+	this.Init();
+	Comments.showSection('alt_section');
+
+	reply_box.attr('data-in-attach', 1);
+}
+
+AttachImage.getHTML = function()
+{
+	var tmpl = 
+	'<div class="section-wrapper">' +
+		'<div class="return-back">' +
+			'<a href="#">← {{Return to comments}}</a>' +
+		'</div>' + 
+		'<div class="tabbable tabs-left">' +
+			'<ul class="nav nav-tabs">' +
+				'<li class="active"><a href="#url_tab" data-toggle="tab">{{From URL}}</a></li>' +
+				'<li><a href="#upload_tab" data-toggle="tab">{{Upload from computer}}</a></li>' +
+			'</ul>' +
+			'<div class="tab-content">' +
+				'<div class="tab-pane active" id="url_tab">' +
+					'<form id="attach_image_from_url">' +
+					  '<fieldset>' +
+						'<legend>{{Upload from URL}}</legend>' +
+						'<label>{{Upload URL Label}}</label>' +
+						'<input type="text" name="image_url"><br/>' +
+						'<div class="preview well">' +
+							'<p>{{Upload from URL preview}}</p>' +
+							'<img src="" class="loading hide" />' + 
+						'</div>' +
+						'<button type="submit" disabled="disabled" class="btn btn-primary">{{Attach}}</button>' +
+					  '</fieldset>' +
+					'</form>' +
+				'</div>' + // url_tab content
+
+				'<div class="tab-pane" id="upload_tab">' +
+					'<iframe style="width:100%;height:300px;border:none;" scrolling="no" frameBorder="0" id="upload-tab-iframe" src="%UPLOAD_IFRAME_URL%"></iframe>' +
+				'</div>' +
+			'</div>' + // tab-content
+		'</div>' + // tabbable
+	'</div>'; // section-wrapper
+
+
+	var upload_iframe_url = '//' + Comments.subdomain + '.' + Comments.domain + '/commentswidget/attachment/uploadImage';
+
+	var html = fillUpTemplate(tmpl, {
+		'UPLOAD_IFRAME_URL': upload_iframe_url
+	});
+
+	return html;
+}
+
+AttachImage.bindEvents = function()
+{
+	var that = this;
+
+	var $o = $('section#alt_section');
+
+	$o.find('.return-back > a').click(function() {
+		that.close();
+		return false;
+	});
+
+	// Upload file tab
+	var $preview_img = $o.find('#url_tab .preview img');
+
+	$o.find('input[name="image_url"]').bind("change paste keyup click", function(){
+		var value = $(this).val();
+		if(value.substring(0, 7) != "http://" && value.substring(0, 8) != "https://")
+			value = 'http://' + value;
+
+		/* 
+		 * we set up a timeout of change and reset it if new input,
+		 * so that when user types smth like http://
+		 * we dont have to check `h`, `ht`, `htt`, `http` etc.
+		 */
+		var t=setTimeout(function(){
+			if($preview_img.attr('src') != value) 
+				$preview_img.attr('src', value).addClass('loading').show();
+		}, 1000);
+
+		// clear previous timeout
+		if(this.changeURLTimeout != undefined)
+			clearTimeout(this.changeURLTimeout);	
+
+		this.changeURLTimeout = t;
+
+	}); // image url changed
+
+	$preview_img.error(function(){
+		$(this).hide();
+		$o.find('#url_tab button[type="submit"]').prop('disabled',true);
+	}).load(function() {
+		$(this).removeClass('loading');
+		$o.find('#url_tab button[type="submit"]').prop('disabled',false);
+		//$o.find('#url_tab button[type="submit"]').removeAttr('data-loading-text');
+	});
+
+	$o.find('form#attach_image_from_url').submit(function(){
+		$o.find('#url_tab button[type="submit"]').attr('data-loading-text', Comments.t('Uploading...')).button('loading');
+		var url = $o.find('input[name="image_url"]').val();
+		AttachImage.attachFromURL(url);
+		return false; // must
+	})
+	
+	// -----------------
+	pm.unbind("imageUploaded");	
+	
+	pm.bind("imageUploaded", function(url) {
+		console.log('uploaded received');
+		AttachImage.done(url);
+	});
+}
+
+AttachImage.toggleDisable = function()
+{
+	if(this.is_disabled === undefined)
+		this.is_disabled = false;
+
+	$('section#alt_section #url_tab button[type="submit"]').prop('disabled', !this.is_disabled);
+
+	this.is_disabled = !this.is_disabled;
+}
+
+AttachImage.attachFromURL = function(url)
+{
+	this.toggleDisable();
+	$.ajax({
+		url: 'attachment/uploadImageFromURL'
+		,type: 'POST'
+		,data: {
+			'image_url': url 
+			,'CSRF_TOKEN': Comments._csrf_token
+		}
+		,dataType: 'json'
+	})
+	.done(function(data) { 
+		try {
+			if( data ) {
+				if (data['status'] && data['status'] == 'success') {
+					AttachImage.done(data['data']);
+				} else {
+					Comments.showAlert(
+						data['error_message'] ? data['error_message'] : Comments.t('General error message')
+					);
+				}
+			}
+		} catch (err) {console.log(err.message)}
+	})
+	.error(function(){
+		Comments.showAlert( Comments.t('General error message') );
+		$('#url_tab button[type="submit"]').button('reset');
+	})
+	.always(function(data_obj, status_text, objerror) {
+		AttachImage.toggleDisable();
+	});
+};
+
+
+// call this when attaching done
+AttachImage.done = function(attach_url)
+{
+	Comments.addAttachment(this.reply_box, {
+		'type': 'image',
+		'url': attach_url
+	});
+	this.close();
+};
+
+AttachImage.close = function() {
+	this.reply_box.removeAttr('data-in-attach');
+	Comments.showSection('comments');
+};
+
+/*-------------------------------------------------------------------*/
+
+//Single comment view section
+var SingleView = {};
+SingleView.Show = function(comment_id)
+{
+	var $section = Comments.showSection('singleCommentView');
+	this.section = $section;
+
+	var html = this.getHTML(comment_id);
+	$section.html(html);
+
+	var cdata = Comments.comments[comment_id];
+	View.add(cdata, {attach_node: $section.find('ul.post-list')});
+
+	this.bindEvents();
+}
+
+SingleView.getHTML = function(comment_id)
+{
+	var tmpl = 
+	'<div class="section-wrapper">' +
+		'<div class="return-back">' +
+			'<a href="#">← {{All comments}}</a>' +
+		'</div>' + 
+		'<ul id="post-list" class="post-list">' +
+		'</ul>' +
+	'</div>' +
+	'<div class="loading-wrapper"><div class="loading"></div></div>';
+
+	var html = fillUpTemplate(tmpl, {
+	});
+
+	return html;
+}
+
+SingleView.bindEvents = function()
+{
+	this.section.find('.return-back > a').click(function() {
+		Comments.Reload();
+		return false;
+	});
+}
+
+/*-------------------------------------------------------------------*/
+// COMMENTS RENDERER
+var View = {};
+
+/* Render comment to view */
+View.add = function( cdata, options) {
+
+	var $attach_to;
+	if(options['attach_node'])
+		$attach_to = options['attach_node'];
+	else 
+		$attach_to = this.getAttachNode(cdata, options);
+
+	var html = this.getHTML(cdata, options);
+
+	var $new_comment;
+	if(options['add_to_top']) 
+		$new_comment = $(html).prependTo($attach_to);
+	else
+		$new_comment = $(html).appendTo($attach_to);
+
+	this.checkIfTooBig($new_comment);
+
+	this.bindEvents($new_comment, cdata['id']);
+
+	this.updateNewClass();
+}
+
+View.remove = function(cid) {
+
+	var $c = $('#post-'+cid);
+	if($c) {
+		if( $c.children('ul.children').children().length ) {
+			$c.children('.post-content').html('<div class="avatar"></div> <div class="post-body">сообщение было удалено</div>');
+			$c.addClass('deleted');
+		} else {
+			$c.slideUp(250, function() {
+				$c.remove();
+			});
+		}
+	}
+
+}
+
+/*
+ * Check if comment DOM object is too big,
+ * If so - collapse it on 'max-height' and add 'show-more'
+ *
+ */
+View.checkIfTooBig = function($c) {
+	var $body = $c.find('.post-message');
+	if($body.height() > 400) {
+		$body.addClass('cropped');
+		$body.after(
+			'<div class="crop-menu"><a href="#"><div class="crop-menu-inner">' + 
+				Comments.t('Show full') + 
+			'</div></a></div>');
+
+		$c.find('.crop-menu a').click(function(){
+			$body.removeClass('cropped');
+			$(this).closest('.crop-menu').remove();
+			var full_height = $body.prop('scrollHeight');
+			$body.css('height', full_height + 'px');
+			return false;
+		});
+	}
+
+}
+
+/**
+ * Update comments cropped status
+ */
+View.updateCropped = function() {
+	var self = this;
+	$('.post-list .post-body .crop-menu').remove();
+	var $comments = $('.post-list .post-message').removeClass('cropped').each(function(i,e){
+		self.checkIfTooBig($(e.parentNode));
+	});
+
+	//for(var i in $comments)
+}
+
+View.updateAll = function() {
+
+	for(cid in Comments.comments) {
+		this.update(cid);
+	}
+}
+
+/* update comment with new data */
+View.update = function(cid) {
+
+	var cdata = Comments.comments[cid];
+	if(!cdata) return;
+
+	var content_ = this.getHTML_content(cdata);
+	$("#post-" + cid + " > .post-content").html(content_);
+
+	this.bindEvents($("#post-" + cid), cdata['id']);
+}
+
+View.getAttachNode = function(cdata, options) {
+
+	var parent_id = cdata['parent_id'];
+	if(Comments.view == 'admin' || Comments.view =='plain')
+		parent_id = 0;
+
+	// if single and we add first comment
+	if(Comments.view == 'single' && !Object.size(Comments.comments) )
+		parent_id = 0;
+
+	var $p;
+
+	if(!parent_id)
+		$p = $("#post-list");
+	else {
+		$p = $("li#post-" + parent_id);
+		if($p.length == 0)
+			$p = this.addDeletedParent(cdata);
+
+		if($p)
+			$p = $p.find('ul.children')[0];
+	}
+
+	return $p;
+}
+
+/* render 'deleted' dummy parent-comment */
+View.addDeletedParent = function(cdata) {
+
+	var tree = cdata.tree_path.split("-");
+	tree.pop(); //remove current_id
+
+	if(tree.length < 1) //weird, should be at least 1 (parent)
+		return undefined;
+
+	//var full_id_page_part = cdata['parent_id'] - tree[tree.length - 1];
+
+	// we traverse from root to parent_id. in current_parent_id we store parent_id relative to current tree_id.
+	// basicly current_parent_id is a previous tree_id
+	var current_parent_id = 0;
+	var $p_node = undefined;
+	for(tree_key in tree) {
+		var tree_id = cdata['page_id'] + '-' + parseInt(tree[tree_key], 10);
+		var $node = $("#post-" + tree_id);
+		if($node.length == 0) { //havent found. ADD ;)
+			//var html = Comments.getDeletedCommentHTML(tree_id);
+			var html = View.getDeletedHTML(tree_id);
+			var $attach_node;
+			if(current_parent_id) {
+				$attach_node = $("#post-" + current_parent_id + " > ul.children");
+				if($attach_node.length == 0) // this is some shit,
+					return undefined;
+
+				$attach_node = $attach_node[0];
+
+			} else {
+				$attach_node = $("#post-list");
+			}
+			$p_node = $(html).appendTo($attach_node);
+		}
+
+		current_parent_id = tree_id;
+	}
+
+	return $p_node;
+
+}
+
+View.getDeletedHTML = function(cid) {
+	var html = '';
+
+	html += '<div class="post-content">';
+		html += '<div class="avatar"></div>';
+		html += '<div class="post-body">сообщение было удалено</div>';
+	html += '</div>';
+
+	html += '<ul class="post-list children"></ul>';
+
+	html = '<li class="deleted post" id="post-' + cid + '">' + html + '</li>';
+	return html;
+}
+
+View.getHTML = function(cdata, options) {
+
+	var tmpl = 
+		'<li id="post-%POST_ID%" class="post">' +
+			'%POST_CHECKBOX%' +
+			'<div class="post-content %MARK_CLASS%">' +
+				'%CONTENT%' +
+			'</div>'+
+			'<ul class="post-list children"></ul>' +
+			'<div class="collapsed-children-notifier">' + 
+				'<span class="num"></span> ' + 
+				'<a href="#">{{expand thread}}</a>' +
+			'</div>' +
+		'</li>';
+
+	var mark_class = '';
+	if(options['mark_as_new']) mark_class = 'mark-new';
+
+	var post_checkbox = '';
+		if(Comments.view == 'admin') post_checkbox = '<input name="post-' + cdata['id'] + '" class="post-checkbox" type="checkbox">';
+
+	var html = fillUpTemplate(tmpl, {
+		'POST_ID': cdata['id'],
+		'CONTENT': this.getHTML_content(cdata, options),
+		'MARK_CLASS': mark_class,
+		'POST_CHECKBOX': post_checkbox
+	});
+
+	return html;
+}
+
+View.getHTML_content = function(cdata, options) {
+
+	var tmpl = 
+			//'<div class="indicator"></div>' + 
+			'%ADMIN_STATUS%' + 
+			'<div class="avatar"><a href="#"><img src="%PHOTO_SRC%"/></a></div>' + 
+			'<div class="post-body">' +
+				'<header>%HEADER%</header>' +
+				'<div class="post-message">%MESSAGE%</div>' +
+				'<footer class="clearfix">%FOOTER%</footer>' +
+				'<menu>%MENU%</menu>' +
+			'</div>';
+
+	var profile = undefined; 
+		if(cdata['pid']) profile = Comments.profiles[cdata['pid']];
+
+	var header  = this.getHTML_header(cdata);
+	var footer  = this.getHTML_footer(cdata);
+	var message = this.getHTML_message(cdata);
+	var menu    = this.getHTML_menu(cdata);
+
+	var photo_src = Comments.defaultPhoto;
+	if(profile && profile.photo) photo_src = profile.photo;
+
+	if(cdata['profile_pic'])
+		photo_src = cdata['profile_pic'];
+
+	//if(cdata['type'] >= 10) { // if streamed
+		//if(cdata['stream_data'] && cdata['stream_data']['profile_pic'])
+			//photo_src = cdata['stream_data']['profile_pic'];
+	//}
+	admin_status = '';
+	if(Comments.profile['is_moderator'] && cdata['flagged'] > 0)
+		admin_status = '<div class="flagged-sign" title="' + Comments.t('User reported') +'"><i class="fa fa-exclamation-triangle"></i></div>';
+
+
+	var html = fillUpTemplate(tmpl, {
+		 'HEADER': header
+		,'MESSAGE': message
+		,'FOOTER': footer
+		,'PHOTO_SRC': photo_src
+		,'MENU': menu
+		,'ADMIN_STATUS': admin_status
+	});
+
+	return html;
+
+}
+
+View.getHTML_menu = function(cdata) {
+
+	var menu_items = '';
+	var actions = '';
+
+	if (Comments.profile['is_moderator']) {
+		actions = 
+		'<a href="" class="dropdown-toggle" data-toggle="dropdown">' +
+			'<i class="fa fa-caret-down"></i>' +
+		'</a>' +
+		'<ul class="dropdown-menu pull-right" role="menu">';
+
+			if(cdata['status'] != 'deleted' && cdata['status'] != 'spam') {
+				actions += '<li class="admin"><a href="#" class="edit">' + Comments.t('admin_edit') + '</a></li>';
+				actions += '<li class="admin"><a href="#" class="delete_block">' + Comments.t('admin_delete_block') + '</a></li>';
+				actions += '<li class="admin"><a href="#" class="spam_block">' + Comments.t('admin_spam_block') + '</a></li>';
+			}
+
+			if(cdata['status'] != 'active' || cdata['flagged'] > 0)
+				actions += '<li class="admin"><a href="#" class="approve">' + Comments.t('admin_approve') + '</a></li>';
+
+		actions += '</ul>';
+
+	}
+	else
+		actions += '<a href="#" class="flag" rel="tooltip" title="' + Comments.t('Report moderator') + '"><i class="fa fa-exclamation-triangle"></i></a>';
+
+	var html = 
+		'<a href="#" class="toggle-thread">' +
+			'<i class="fa fa-plus expand"></i>' +
+			'<i class="fa fa-minus collapse"></i>' +
+		'</a>' +
+		actions;
+
+	return html
+}
+
+View.getHTML_header = function(cdata) {
+
+	var html = '';
+
+	var tmpl = 
+		'<span>%USER_NAME%</span>' + 
+		'%USER_BADGE%' + 
+		'%REPLY_TO%' + 
+		"<span class='bullet'>•</span>" + 
+		'<span class="time-ago">%POST_TIME%</span>' +
+		'%SOURCE_INDICATOR%' + // for streamed comments
+		'%COMMENT_LINK%';
+
+	var profile = Comments.profiles[cdata['pid']];
+
+	var user_name = '_DELETED_';
+
+		if(cdata['guest_name']) user_name = cdata['guest_name'];
+
+		if(profile) {
+			user_name = trim(profile['first_name'] + " " + profile['last_name']);
+			if(!user_name)
+				user_name = profile['username'];
+		}
+		
+		if(cdata['is_guest'] || !profile)
+			user_name = "<a href='' class='user-name guest'>" + user_name + "</a>";
+		else 
+			user_name = "<a href='#' class='user-name'>" + user_name + "</a>";
+
+
+	//------------------------------------------------------------------------
+
+	var user_badge = View.getUserBadge_html(profile);
+
+	//------------------------------------------------------------------------
+
+	var post_time = cdata['time'];
+
+		try {
+			//post_time = post_time.substring(0, post_time.length-3);
+			post_time = timeSinceString(post_time);
+		}
+		catch(err) { console.error('[getHtml_header] error converting time: ' + err);}
+		
+
+	//------------------------------------------------------------------------
+	var source_indicator = '';
+	if(cdata['type'] != 0) {
+		source_indicator = "<span class='bullet'>•</span><span class='streamed-from'>" + Comments.t('Streamed from') + '</span> ';
+		switch(cdata['type']) {
+			case 10:
+			case 11: // vkontakte
+				source_indicator += "<a target='_blank' href='" + cdata['stream_data']['guest_link'] + "'><i class='fa fa-vk stream-source-vk'></i></a>";
+				break;
+			default:
+				//TODO: log error here
+				source_indicator = '';
+				break;
+		}
+	}
+
+	//------------------------------------------------------------------------
+	// comment_link is for admin dashboard view
+	var comment_link = '';
+	if(Comments.view == 'admin') {
+		var url = '';
+		var title = '';
+		var pdata = Comments.pages[cdata['page_id']];
+		if(pdata) {
+			url =pdata['url'];
+			title = pdata['title'] ? pdata['title'] : url;
+		}
+		if(!url)
+			title = 'удалено';
+
+		if(title.length > 50) {
+			title = title.substr(0, 47) + '...';
+		}
+
+		comment_link = "<span class='bullet'>•</span>" + 
+						'<span class="page-link">' + 
+							'<span>' + title + '</span>';
+
+		if(url) {
+			var c_id = cdata['id'].split('-')[1];
+			url += '#kament_comments/c'+c_id;
+			comment_link += '<a target="_blank" class="page-out" href="' + url + '"><i class="fa fa-external-link"></i></a>';
+		}
+
+		comment_link +='</span>';
+	}
+	//-------------------------------------------------------------------------
+	var reply_to = '';
+
+	if(cdata['parent_id']) {
+		var parent_c = Comments.comments[ cdata['parent_id'] ];
+		if(parent_c) {
+			var to_uname = '';
+			if(parent_c['is_guest'])
+				to_uname = parent_c['guest_name'];
+			else {
+				var p = Comments.profiles[parent_c['pid']];
+				if(p) to_uname = (p['first_name'] + " " + p['last_name']);
+			}
+
+			if(to_uname) {
+				reply_to = '<span class="reply_to"><a><i class="fa fa-share"></i> ' + to_uname + '</a></span>';
+			}
+		}
+	}
+
+	//TODO нужно как то помечать флагнутые комментарии если смотрит модератор
+	var html = fillUpTemplate(tmpl, {
+		'USER_NAME': user_name
+		,'USER_BADGE': user_badge
+		,'POST_TIME': post_time
+		,'COMMENT_LINK': comment_link
+		,'SOURCE_INDICATOR': source_indicator
+		,'REPLY_TO': reply_to
+	});
+
+	return html;
+
+}
+
+View.updatePostTiming = function(comment_id, comment_time)
+{
+	try {
+		var time_str = timeSinceString(comment_time);
+		$('#post-' + comment_id + ' > .post-content header > .time-ago').text(time_str);
+	}
+	catch(err) { console.error('[getHtml_header] error converting time: ' + err);}
+		
+}
+
+View.getUserBadge_html = function(profile)
+{
+	if(!profile)
+		return '';
+
+	var badge_name = '';
+
+	/*if(profile['is_blocked'])
+		badge_name = 'blocked';*/
+
+	//if(profile['is_moderator'])
+		//badge_name = 'moderator';
+
+	/*if(Comments.config.community.show_levels) {
+		if(profile['level'] == 1)
+			badge_name = 'bronze';
+		else if(profile['level'] == 2)
+			badge_name = 'silver';
+		else if (profile['level'] == 3)
+			badge_name = 'gold';
+	}*/
+
+	if(badge_name)
+		return "<span class='badge badge-" + badge_name + "'>" + Comments.t('user_badge-'+badge_name) + "</span>";
+	else
+		return '';
+}
+
+View.getHTML_footer = function(cdata) {
+	var tmpl = 
+		'<menu class="clearfix inline-comment-menu" id="post-%POST_ID%-footer-menu">' + 
+			'<li class="voting">' + 
+				'<a href="#" class="vote-up %VOTE_UP_ACTIVE%">' + 
+					"<span class='count %COUNTER_UP_CLASS%'>%LIKES%</span>" +
+					'<span class="control fa fa-thumbs-o-up"></span>' + 
+				"</a>" +
+				'<a href="#" class="vote-down %VOTE_DOWN_ACTIVE%">' +
+					"<span class='count %COUNTER_DOWN_CLASS%'>%DISLIKES%</span>" +
+					'<span class="control fa fa-thumbs-o-down"></span>' +
+				'</a>' +
+			"</li>\n";
+
+	if(!Comments.isClosed) {
+		tmpl +=
+			"<li class='bullet'>•</li>\n" + 
+			"<li class='reply'><a href=''>{{Reply}}</a></li>\n";
+	}
+		tmpl +=
+			"<li class='bullet'>•</li>\n" + 
+
+			"<li class='share'><a>{{Share}} <i class='fa fa-chevron-right'></i></a>\n" +
+				"<ul class='services'>" +
+					"<li><a href='#' data-service='vkontakte'><i class='fa fa-vk'></i></a></li>\n" +
+					"<li><a href='#' data-service='facebook'><i class='fa fa-facebook'></i></a></li>\n" +
+					"<li><a href='#' data-service='twitter'><i class='fa fa-twitter'></i></a></li>\n" +
+				"</ul>" +
+			"</li>\n" +
+
+
+			"%INLINE_MODERATION%\n" +
+			'<li class="live-update">' + 
+				'<a href="#">' +
+					'<span class="indicator"></span>' +
+					'<span class="text"></span>' +
+				'</a>' + 
+			'</li>' + 
+		'</menu>' + 
+		'<div class="clear"></div>';
+
+	var inline_moderation = '';
+	if(Comments.profile['is_moderator']) {
+
+		if(cdata['status'] != 'active' || cdata['flagged'] > 0)
+			inline_moderation += '<li class="approve"><a href="#">' + Comments.t('admin_approve') + "</a></li>\n";
+
+		if(cdata['status'] != 'deleted')
+			inline_moderation += '<li class="delete"><a href="#">' + Comments.t('admin_delete') + "</a></li>\n";
+
+		if(cdata['status'] != 'spam')
+			inline_moderation += '<li class="spam"><a href="#">' + Comments.t('admin_spam') + "</a></li>\n";
+
+	}
+
+	//------------------------------------------------------------------------
+	var vote_up_active = '';
+	var vote_down_active = '';
+
+		if(Comments.likesData[ cdata['id'] ]) {
+			if(Comments.likesData[ cdata['id'] ] > 0)
+				vote_up_active = 'active';
+			if(Comments.likesData[ cdata['id'] ] < 0)
+				vote_down_active = 'active';
+		}
+	//------------------------------------------------------------------------
+
+	var html = fillUpTemplate(tmpl, {
+		'POST_ID': cdata['id'],
+		'VOTE_UP_ACTIVE': vote_up_active,
+		'VOTE_DOWN_ACTIVE': vote_down_active,
+		'LIKES': cdata['likes'],
+		'DISLIKES': cdata['dislikes'],
+		'INLINE_MODERATION': inline_moderation,
+		'COUNTER_UP_CLASS': (cdata['likes'] == 0 ? 'hide' : ''),
+		'COUNTER_DOWN_CLASS': (cdata['dislikes'] == 0 ? 'hide' : '')
+	});
+
+	return html;
+}
+
+View.URL2Link = function(text) {
+/*
+говорят по эльфийски:
+
+(?:
+	^|\s|\n|<br\s?\/?>|[("'[]
+)
+(
+	(?:https?:\/\/)?
+	(?:[а-яёa-z0-9.-]{1,128}\.)+
+	(?:com|net|org|mil|edu|arpa|gov|biz|info|aero|inc|name|рф|[a-z]{2})
+	(?:
+		(?:
+			[/?#]
+			[а-яёa-z0-9/._~!?$&()*+,;#=:@-]*
+			[а-яёa-z0-9/_)~]
+		)?
+	)
+)
+(?=
+	$|[^а-яёa-z0-9]
+)
+*/
+	text = text.replace(/(?:^|\s|\n|<br\s?\/?>|[("'[])((?:https?:\/\/)?(?:[а-яёa-z0-9.-]{1,128}\.)+(?:com|net|org|mil|edu|arpa|gov|biz|info|aero|inc|name|рф|[a-z]{2})(?:(?:[/?#][а-яёa-z0-9/._~!?$&()*+,;#=:@-]*[а-яёa-z0-9/_)~])?))(?=$|[^а-яёa-z0-9])/gi,
+		function(match, contents, offset, s) {
+			var away_url = htmlDecode(contents);
+			if(!away_url.match(/^https?:\/\//i)) {
+				away_url = 'http://' + away_url;
+			}
+			var url = 'http://' + Comments.subdomain + '.' + Comments.domain + '/commentswidget/away/?url=' + encodeURIComponent(away_url);
+			var link = '<a target="_blank" href="' + url + '">' + contents + '</a>';
+			return match.replace(contents, link);
+		}
+	);
+	return text;
+}
+
+// get comment message itself
+View.getHTML_message = function(cdata) {
+
+	var message = this.URL2Link( cdata['text'] );
+
+	// Add attachments
+	
+	message += '<div class="attachments clearfix">';
+		for(ai in cdata['attachments']) {
+			var a = cdata['attachments'][ai];
+
+			if(a['type'] == 'image') {
+				var url = htmlEncode(a['url']);
+
+				var img_attach_tmpl = 
+					'<img src="%URL%"/>';
+					//'<div class="image-attach" data-attach-id="%ATTACH_ID%" style="background:url(%URL%) no-repeat center center;background-size:contain;">' +
+					//'</div>';
+
+				var attach_html = fillUpTemplate(img_attach_tmpl, {
+					 'URL': a['url']
+					,'ATTACH_ID': ai
+				});
+
+				message += attach_html;
+
+			} else {
+				console.error('Unknown attachment type: ' + a['type']);
+			}
+		}
+	message += '</div>';
+	
+
+	return message;
+}
+
+View.bindEvents = function($c, cid) {
+
+	$c_c = $c.children('.post-content');
+	// REPLY ------------------------------
+	$c_c.find(".inline-comment-menu .reply > a").click(function() {
+		var post = $(this).closest('li.post');
+		var ul = post.children("ul");
+		var rep = $(ul).children("li.reply");
+
+		if($(ul).children("li.reply").length == 0) {
+			var rep_li = $('<li class="reply"></li>').prependTo(ul);
+			var reply_box = Comments.attachReplyBox( rep_li, cid, 'reply' );
+			$(reply_box).find(".postbox .textarea-wrapper [name='message']")[0].focus();
+		}
+
+		return false;
+	});
+
+	$c_c.find("a.flag").click(function() {
+		Comments.flagComment(cid);
+		return false;
+	});
+
+	$c_c.find("menu a.toggle-thread").click(function() {
+		View.toggleThread($c);
+		return false;
+	});
+
+	// ----- SHARE BUTTONS -----
+	$c_c.find(".share .services a").click(function() {
+		var type = $(this).attr('data-service');
+		Comments.share(cid, type);
+		return false;
+	});
+
+	
+	// ----- ADMIN INLINE BUTTONS -----
+	$c_c.find(".inline-comment-menu li.approve > a").click(function() {
+		Comments.adminChangeCommentStatus("active", cid);
+		return false;
+	});
+
+	$c_c.find(".inline-comment-menu li.delete > a").click(function() {
+		Comments.adminChangeCommentStatus("deleted", cid);
+		return false;
+	});
+
+	$c_c.find(".inline-comment-menu li.spam > a").click(function() {
+		Comments.adminChangeCommentStatus("spam", cid);
+		return false;
+	});
+	
+	// ----- ADMIN DROPDOWN BUTTONS -----
+	$c_c.find("li.admin > a.edit").click(function() {
+		Comments.adminEditMessage(cid);
+		return false;
+	});
+
+	$c_c.find("li.admin > a.delete_block").click(function() {
+		Comments.adminDeleteAndBlock("deleted", cid);
+		return false;
+	});
+
+	$c_c.find("li.admin > a.spam_block").click(function() {
+		Comments.adminDeleteAndBlock("spam", cid);
+		return false;
+	});
+
+	// VOTING ----------------------------
+	$c_c.find("a.vote-up").click(function() {
+		var vote_val = 1;
+		if( $(this).hasClass('active') ) //if already active - remove
+			vote_val = 0;
+
+		Comments.votePost(vote_val, cid, this);
+		return false;
+	});
+
+	$c_c.find("a.vote-down").click(function() {
+		var vote_val = -1;
+		if( $(this).hasClass('active') ) //if already active - remove
+			vote_val = 0;
+		Comments.votePost(vote_val, cid, this);
+		return false;
+	});
+
+
+	// admin-view checkbox
+	$c_c.children("input.post-checkbox").change(function() {
+		Comments.checkedChanged();
+	});
+
+	// show new live-update comments
+	$c_c.find("li.live-update > a").click(function() {
+		Comments.showLiveUpdate(cid);
+		return false;
+	});
+
+
+	// user profile
+	$c_c.find("div.avatar, header a.user-name").click(function() {
+		if(!Comments.comments[cid]['is_guest'])
+			Comments.showProfile( Comments.comments[cid]['pid'] );
+
+		return false;
+	});
+
+	//////////////// HOVERCARD //////////////////////////////////////////
+	// show
+	//
+	// TODO: 
+	$c_c.find("div.avatar").mouseenter(function() {
+		if( Comments.comments[cid]['is_guest'] )
+			return;
+		View.openHovercard($(this), Comments.comments[cid]['pid']);
+	});
+
+	//remove
+	$c_c.find("div.avatar").mouseleave(function() {
+		View.closeHovercard(this);
+	});
+
+	// ATTACHMENTS
+	$c_c.find(".image-attach").click(function() {
+		var attach_id = $(this).attr('data-attach-id');
+		Comments.openAttachedImage(cid, attach_id);
+		return false;
+	});
+
+	//$c_c.find('a.flag').tooltip({'placement':'left'});
+	
+}
+
+/* update posts with 'new' class. Remove .new if already seen */
+View.updateNewClass = function()
+{
+	if(Comments._current_section != 'comments')
+		return;
+
+	$(".post-content.mark-new:not(.seen)").each(function(i,e){
+		if(isScrolledIntoView(e)) {
+			$(e).addClass('seen');
+			setTimeout(function(){$(e).removeClass('mark-new seen');}, 8000); //css is set to 10sec
+		}
+	});
+}
+
+View.hovercard_HTML_default = function(pid)
+{
+	var html = '';
+	var p = Comments.profiles[pid];
+	if(!p) return '';
+
+	html += '<div class="hovercard-container">' + 
+				'<div class="hovercard">';
+	
+	html += '<div class="notch"></div>';
+	if(p) {
+		html += 
+			'<a href="#" class="avatar"><img src="' + (p['photo'] ? p['photo'] : Comments.defaultPhoto) + '"/></a>' + 
+
+			'<div class="content">' + 
+				'<h3><a href="#">' + (p['nickname'] ? p['nickname'] : p['first_name'] + " " + p['last_name']) + '</a></h3>' +
+				'<h6>' + (p['nickname'] ? p['first_name'] + " " + p['last_name'] : '') + '</h6>'+
+				'<p>' + 
+					Comments.t('comments num:') + " " + p['comments'] + " " +
+					'<span class="bullet"></span>' +
+					Comments.t('likes num:') + " " + p['likes'] + " " +
+				'</p>' + 
+			'</div>' + 
+
+			'<footer>' +
+				'<a href="#" class="full-profile">' + Comments.t('Full profile') + ' ►</a>'+"\n"+
+				'<div class="clear"></div>'+
+			'</footer>';
+	} else {
+		html += '<h6>No user info</h6>';
+	}
+
+	html +=		'</div>' +  //tooptip
+			'</div>'; //hovercard-container
+	return html;
+
+}
+
+View.hovercard_HTML_admin = function(pid)
+{
+	var html = '';
+	var p = Comments.profiles[pid];
+
+	html += '<div class="hovercard-container">' + 
+				'<div class="hovercard admin">';
+	
+	html += '<div class="notch"></div>';
+
+
+	function getAdminStatsContent(p)
+	{
+		var stats = 
+				'<div class="entry">' + 
+					'<div class="entry-label">' + Comments.t('StatsPosts') + '</div>' + 
+					'<div class="entry-value">' + p['stats']['comments'] + '</div>' + 
+				'</div>' +
+				'<div class="entry">' + 
+					'<div class="entry-label">' + Comments.t('StatsLike') + '</div>' + 
+					'<div class="entry-value">' + p['stats']['likes'] + '</div>' + 
+				'</div>' +
+				'<div class="entry">' + 
+					'<div class="entry-label">' + Comments.t('StatsFlag') + '</div>' + 
+					'<div class="entry-value">' + p['stats']['flags'] + '</div>' + 
+				'</div>' +
+				'<div class="entry">' + 
+					'<div class="entry-label">' + Comments.t('StatsSpam') + '</div>' + 
+					'<div class="entry-value">' + p['stats']['comments_spam'] + '</div>' + 
+				'</div>' +
+				'<div class="entry">' + 
+					'<div class="entry-label">' + Comments.t('StatsApproved') + '</div>' + 
+					'<div class="entry-value">' + parseInt((p['stats']['comments'] > 0 ? p['stats']['comments_approved']*100/p['stats']['comments'] : 0), 10) + ' %</div>' + 
+				'</div>' +
+				'<div class="entry">' + 
+					'<div class="entry-label">' + Comments.t('StatsJoined') + '</div>' + 
+					'<div class="entry-value">' + days_between(p['stats']['joined']) + ' ' + Comments.dt( days_between(p['stats']['joined']), 'day') + ' </div>' + 
+				'</div>';
+
+		return stats;
+	}
+
+
+		var actions = '';
+		var block_style = '';
+		var unblock_style = '';
+
+		if(p['is_blocked'])
+			block_style = 'display:none;';
+		else
+			unblock_style = 'display:none;';
+
+		actions += '<button style="' + block_style + '" class="btn btn-small block">' + Comments.t('block') + '</button>';
+		actions += '<button style="' + unblock_style + '" class="btn btn-small unblock">' + Comments.t('unblock') + '</button>';
+
+		var inner_html = 
+			'<header class="head">' + 
+				'<a href="#" class="avatar"><img src="' + (p['photo'] ? p['photo'] : Comments.defaultPhoto) + '"/></a>' + 
+				'<div class="username">' + 
+					'<div class="name">' + p['first_name'] + " " + p['last_name'] + '</div>' +
+					//'<div class="email">' + (p['email'] ? p['email'] : '') + '</div>' + 
+				'</div>' +
+				'<div class="actions">' + 
+					actions +	
+				'</div>' +
+				'<div class="clearfix"></div>' +
+			'</header>' + 
+			'<div class="content clearfix">' + 
+			'<div class="profile-stats clearfix" data-profile-id="' + pid + '">';
+
+
+
+	if(p && p['stats']) {
+		inner_html += getAdminStatsContent(p);
+	} else {
+		inner_html += '<div class="loading clearfix"></div>';
+
+		$.ajax({ url: '/ajax/profile/get?pids=' + pid, dataType: 'json' })
+			.done(function(data) { 
+				if( data && data['status'] && data['status'] == 'success' && data['data']) {
+					if(data['data'][0]) {
+						Comments.profiles[ pid ] = data['data'][0];
+						p = data['data'][0];
+					}
+				}
+				//$('.hovercard .profile-stats [data-profile-id="' + pid + '"]').html('updated');
+			})
+			.always(function(data_obj, status_text, objerror) {
+				$('.hovercard [data-profile-id="' + pid + '"].profile-stats .loading').remove();
+				if(p && p['stats']) {
+					$('.hovercard [data-profile-id="' + pid + '"].profile-stats').html( getAdminStatsContent(p) );
+				}
+			});
+	}
+
+	inner_html += '</div>'; // profile_stats
+
+
+	inner_html += '</div>'; // content
+
+	html += inner_html;
+
+	html +=		'</div>' +  //tooptip
+			'</div>'; //hovercard-container
+	return html;
+}
+
+View.hovercard_HTML = function(pid)
+{
+	if(Comments.profile['is_moderator'])
+			return this.hovercard_HTML_admin(pid);
+	else
+			return this.hovercard_HTML_default(pid);
+}
+
+View.hovercard_events = function(hc_node, pid)
+{
+	// bind click events
+	$(hc_node).find(".hovercard a.avatar, .hovercard .content h3 a, .hovercard footer a.full-profile").click(function() {
+		$(hc_node).closest('.hovercard-container').remove();
+		Comments.showProfile( pid );
+		return false;
+	});
+
+	$(hc_node).find(".actions > button.block").click(function() {
+		Comments.adminSetBlock($(this), pid, true);
+		return false;
+	});
+
+	$(hc_node).find(".actions > button.unblock").click(function() {
+		Comments.adminSetBlock($(this), pid, false);
+		return false;
+	});
+}
+
+View.openHovercard = function(parent_node, pid) {
+	$(parent_node).children(".hovercard-container").remove(); //remove if any
+	var html = this.hovercard_HTML(pid);
+	if(!html) return;
+	var hc_node = $(html).appendTo(parent_node);//.append(post_html);
+	View.hovercard_events(hc_node, pid);
+}
+
+View.closeHovercard = function(parent_node) {
+	$(parent_node).children(".hovercard-container").remove(); //remove if any
+}
+
+View.toggleThread = function($comment_element) {
+	$comment_element.toggleClass('collapsed');
+}
+
+View.replyBox_aboutHTML = function() {
+	var html =
+		'';
+}
+
+View.attachClosedAlert = function() {
+	var tmpl = '<div class="well"><p>{{Discussion closed}}</p></div>';
+	var html = fillUpTemplate(tmpl, {}); 
+
+	$('#addPost').html(html);
+}
+
+
+
+/*-------------------------------------------------------------------*/
+var TRANSLATIONS = {
+	'Show more button': 'Показать еще'
+	,'General error message': 'Ошибка!'
+	,'More new comments below': 'Ниже есть новые комментарии'
+	,'Post': 'Отправить'
+	,'Edit': 'Редактировать'
+	,'Post as': 'Отправить как'
+	,'Settings': 'Настройки'
+	,'Register': 'Зарегистрироваться'
+	,'New user': 'Новый пользователь'
+	,'Auth': 'Войти'
+	,'Save': 'Сохранить'
+	,'Cancel': 'Отмена'
+	,'Login': 'Войти'
+	,'Logout': 'Выйти'
+	,'Password': 'Пароль'
+	,'Post as guest': 'Я бы предпочёл опубликовать как гость'
+	,'Login failed': 'Ошибка авторизации'
+	,'Already registered': 'Уже зарегистрированы?'
+	//,'Register_explanation': 'Регистрация позволит вам получать уведомления о новых ответах'
+	,'Notifications of new replies': 'Для уведомлений о новых ответах'
+	,'Social login': 'Войти'
+	,'or register with SV': 'Или зарегистрируйтесь в SV'
+	,'Connect with': 'Войти используя'
+	,'Or select name': 'Или выберите имя'
+	,'Leave your comment...': 'Ваше сообщение...'
+	,'Name': 'Имя'
+	,'Email': 'Почта'
+	,'Email address': 'Электронная почта'
+	,'Cannot post empty!': 'Сообщение не может быть пустым'
+	,'Please login!': 'Пожалуйста введите имя и почтовый адрес или войдите в систему!'
+	,'Please enter your name': 'Пожалуйста введите ваше имя или войдите в систему!'
+	,'Error posting': 'Внутрення ошибка. Мы уже работаем над этим, пожалуйста попробуйте позже.'
+	,'Error editing': 'Внутрення ошибка. Мы уже работаем над этим, пожалуйста попробуйте позже.'
+	,'Bad symbols in name': 'Имя может содержать только алфавитные символы пробел или тире'
+	,'Report comment to moderator': 'Сообщить модератору'
+	,'Bad email format': 'Введите корректный email адрес'
+	,'Return to comments': 'Назад к комментариям'
+	,'All comments': 'Все комментарии'
+	,'comments': 'сообщений'
+	,'votes': 'голосов'
+	,'communities': 'сообществ'
+	,'Full profile': 'Показать полностью'
+	,'comments num:': 'комментариев:'
+	,'likes num:': 'голосов:'
+	,'guest':'гость'
+	,'Reply': 'Ответить'
+	,'Share': 'Поделиться'
+	,'admin_edit':'Редактировать'
+	,'admin_approve':'Одобрить'
+	,'admin_spam':'Спам'
+	,'admin_delete':'Удалить'
+	,'admin_delete_block':'Удалить + Заблокировать'
+	,'admin_spam_block':'Спам + Заблокировать'
+
+	,'user_badge-blocked': 'Блок'
+	,'user_badge-moderator': 'Мод'
+	,'user_badge-bronze': 'Участник'
+	,'user_badge-silver': 'Популярный'
+	,'user_badge-gold': 'Лидер'
+
+	,'comment_last_update': 'Правка'
+	,'block': 'Заблокировать'
+	,'unblock': 'Разблокировать'
+	,'StatsSent': 'Отправлено'
+	,'StatsLike': 'Нравится'
+	,'StatsReceived': 'Получено'
+	,'StatsFlag': 'Жалоб'
+	,'StatsPosts': 'Сообщений'
+	,'StatsSpam': 'Спам'
+	,'StatsApproved': 'Одобрено'
+	,'StatsJoined': 'Вступил'
+	,'listeners_comments': 'комментарии'
+
+	,'Vkontakte': 'Вконтакте'
+	,'Odnoklassniki': 'Одноклассники'
+	,'MailRu': 'Мой Мир'
+	,'Facebook': 'Facebook'
+	,'Twitter': 'Twitter'
+
+	,'Please enter your name or login': 'Пожалуйста введите ваше имя или войдите в систему'
+	,'Please enter your email': 'Пожалуйста введите ваш email'	
+	,'Password too short, min 6 symbols': 'Пароль слишком короткий, минимум 6 символов'	
+	,'Login with email': 'Войти используя email и пароль'
+	,'Streamed from': 'пришло из'
+
+	//,'Sort By': ''
+	,'Oldest': 'Старые'
+	,'Newest': 'Новые'
+	,'Best': 'Лучшие'
+
+	,'Admin dashboard': 'Админ'
+
+	,'Right now': 'только что'
+	,'An hour ago': 'час назад'
+	,'Two hours ago': 'два часа назад'
+	,'Three hours ago': 'три часа назад'
+	,'today': 'сегодня'
+	,'yesterday': 'вчера'
+	,'at' : 'в'
+
+	,'a year ago' : 'год назад'
+	,'2 years ago' : '2 года назад'
+	,'3 years ago' : '3 года назад'
+	,'4 years ago' : '4 года назад'
+	,'years ago' : 'лет назад'
+
+	,'Mon1': 'янв'
+	,'Mon2': 'фев'
+	,'Mon3': 'мар'
+	,'Mon4': 'апр'
+	,'Mon5': 'мая'
+	,'Mon6': 'июн'
+	,'Mon7': 'июл'
+	,'Mon8': 'авг'
+	,'Mon9': 'сен'
+	,'Mon10': 'окт'
+	,'Mon11': 'ноя'
+	,'Mon12': 'дек'
+
+	,'expand thread': 'развернуть'
+	,'Report moderator': 'Сообщить модератору'
+	,'User reported': 'На комментарий пожаловались'
+
+	// AttachImage Section
+	,'Attach': 'Прикрепить'
+	,'Upload from computer': 'Мой компьютер'
+	,'From URL': 'Интернет (URL)'
+	,'Upload from URL': 'Прикрепить изображение'
+	,'Upload URL Label': 'Интернет адрес (URL)'
+	,'Upload from URL preview': 'Предпросмотр'
+
+	,'Uploading...': 'Загружаю...'
+	,'Remove attach': 'Убрать'
+
+	,'Show full': 'Показать полностью'
+	,'No comments yet': 'Никто еще не оставил комментариев'
+	,'No comments yet - admin': 'Никто еще не оставил комментариев'
+	,'Comment not found': 'Комментарий не найден. Возможно он был удален'
+	,'Show all comments': 'Показать все комментарии'
+
+	,'Required': 'обязательно'
+
+	,'Discussion closed': 'Данное обсуждение закрыто'
+	,'Close discussion': 'Закрыть обсуждение'
+	,'Open discussion': 'Открыть обсуждение'
+};
+
+// declination translations [секунда,секунды,секунд]
+var DEC_TRANSLATIONS = {
+	'comment': ['комментарий','комментария', 'комментариев']
+	,'new comment': ['новый комментарий', 'новых комментария', 'новых комментариев']
+	,'flag': ['жалоба','жалоб', 'жалоб']
+	,'day': ['день', 'дней', 'дней']
+	,'people reading': ['человек читает', 'человека читают', 'человек читают']
+	,'seconds ago': ['секунду назад', 'секунды назад', 'секунд назад']
+	,'minutes ago': ['минуту назад', 'минуты назад', 'минут назад']
+	,'days ago': ['день назад', 'дня назад', 'дней назад']
+	,'months ago': ['месяц назад', 'месяца назад', 'месяцев назад']
+	,'replies hidden': ['ответ скрыт', 'ответа скрыто', 'ответов скрыто']
+};
+
+var Comments = {
+	'initialized': false,
+	'root': "",
+	'page_id': 0,
+	'offset': 0,
+	'comments': {},
+	'profiles': {},
+	'pages': {},
+	'viewport_position': {'top': 0, 'bottom': 9999},
+	//'auth': {}, //set this in init // deprecated
+	'view': 'tree', // plain | tree | admin
+	'filter_type': 'active',  
+	'profile': {},
+	'liveUpdateEnabled': 1,
+	'isLiveUpdateAutoShow': true,
+	'likesData': {},
+
+	/* liveUpdate comments data */
+	'liveComments': {
+		 //these are top comments, appended without parent
+		 'top': {
+		 },
+
+		//these are comments that have a parent, appended individually to each parent
+		'child': {
+			/*
+			 * 'comment_id that is currently visible on page and a list of comments to attach to it'
+			 * '<attachParent_id>': [ array of comments to attach]
+			 * */
+		}
+	},
+	'_current_section': 'comments',
+	'mouse_x': 0,
+	'mouse_y': 0,
+	'sleepMode': 0
+	
+	
+};
+
+Comments.updateMouseXY = function(e) // works on IE6,FF,Moz,Opera7
+{ 
+  if (!e) e = window.event; // works on IE, but not NS (we rely on NS passing us the event)
+
+  if (e) { 
+    if (e.pageX || e.pageY) { // this doesn't work on IE6!! (works on FF,Moz,Opera7)
+      Comments.mouse_x = e.pageX;
+      Comments.mouse_y = e.pageY;
+    }
+    else if (e.clientX || e.clientY) { // works on IE6,FF,Moz,Opera7
+      Comments.mouse_x = e.clientX + document.body.scrollLeft;
+      Comments.mouse_y = e.clientY + document.body.scrollTop;
+    }  
+  }
+}
+
+Comments.eventCallback = function(ev_name)
+{
+	pm({
+	  target: window.parent,
+	  type:"Event-" + ev_name
+	});
+}
+
+Comments.openGMAbout = function()
+{
+	pm({
+	  target: window.parent,
+	  type: 'SVGameMaster-openAboutPage'
+	});
+}
+
+
+
+
+Comments.openProfileSettings = function()
+{
+	pm({
+	  target: window.parent,
+	  type:"openProfileSettings"
+	});
+
+	pm.bind("userSettingsUpdated", function() {
+		//Comments.UserLoginUpdate(callback);
+		Comments.UserLoginUpdate();
+	});
+}
+
+
+/*
+ * manage liveUpdate polling
+ */
+Comments.liveUpdateInit = function()
+{
+	if(!Comment.guestUpdateTimeout)
+		Comments.guestUpdateTimeout = 600;
+
+	// TEMP
+	/*if(!Comments.logged_in) {
+		if(!Comments.guestUpdateInterval) {
+			Comments.guestUpdateInterval = setInterval(function(){
+				Comments.Reload();
+				console.log('GUEST UPDATE');
+			}, Comments.guestUpdateTimeout*1000);
+			console.log('Guest Update Interval set!');
+		}
+
+		return;
+	} else {
+		if(Comments.guestUpdateInterval) {
+			clearInterval(Comments.guestUpdateInterval);
+			console.log('Cleared Guest Update Interval!');
+		}
+	}*/
+
+	console.log('liveUpdateInit');
+	if(Comments.liveUpdateSocket) {
+		return;
+	}
+
+
+	var domain = this.subdomain + '.' + this.domain;
+
+	var scheme = 'ws';
+	if(location.protocol == 'https:')
+		scheme = 'wss';
+
+	var socket = new eio.Socket(scheme + '://' + domain + '/engine.io2', {
+		transports: ['websocket']
+	});
+	Comments.liveUpdateSocket = socket;
+
+	var heartbeatInterval = 0;
+
+	socket.on('open', function () {
+		console.log('WS socket opened');
+		socket.send(JSON.stringify({
+			action: 'join'
+			,channel: 'page'+Comments.page_id
+			,profile_id: Comments.logged_in ? Comments.profile.id : 0
+		}));
+
+		socket.on('message', function(msg) {
+			if(msg == 'error') {
+				socket.close();
+			} else 
+				Comments.liveUpdateMessage(msg);
+		});
+
+		heartbeatInterval = setInterval(function(){
+			if(socket) {
+				socket.send(JSON.stringify({
+					action: 'active'
+				}));
+			}
+		}, 30000);
+
+	});
+
+	socket.on('close', function () {
+		console.log('WS socket closed X');
+		if(heartbeatInterval)
+			window.clearInterval(heartbeatInterval);
+		socket = undefined;
+		Comments.liveUpdateSocket = undefined;
+
+		setTimeout(function(){
+			Comments.liveUpdateInit();
+		},5000 + Math.floor((Math.random()*35000)+1) );  // spread in 5 seconds
+	});
+
+
+}
+
+Comments.liveUpdateMessage = function(data)
+{
+	var obj;
+	try {
+		obj = JSON.parse(data);
+	}catch(e){
+		console.error('bad liveupdate json');
+		console.trace(data);
+		return;
+	}
+
+	if(obj['type'].indexOf('GM-matchFinished') === 0) {
+
+		for(var profile_id in obj['data']) {
+			var result = obj['data'][profile_id];
+			if(profile_id == Comments.profile.id) {
+				pm({
+				  target: window.parent,
+				  type:'SVGameMaster-eventResult',
+				  data: result
+				});
+			}
+		}
+
+
+	} else {
+
+		switch(obj['type']) {
+
+			case 'newComment':
+					// dirty hack. websockets newComment comes faster than postComment reply :)
+					if(Comments.profile && Comments.profile.id == obj['data']['comment']['pid']) {
+						setTimeout(function(){Comments.updateLiveComment(obj['data']);}, 1000);
+					} else 
+						Comments.updateLiveComment(obj['data']);
+				break;
+
+			case 'commentVote':
+				Comments.liveUpdateVote(obj['data']);
+				break;
+
+			case 'listenersUpdate':
+				Comments.updateListeners(obj['data']);
+				break;
+
+			case 'removeComment':
+				if(obj['data']['id'])
+					Comments.removeComment(obj['data']['id']);
+				break;
+
+			case 'removeAllBy': 
+				if(obj['data']['profile_id'])
+					Comments.removeAllBy( obj['data']['profile_id'] );
+				break;
+
+			default:
+				console.error('Unknown liveUpdate message type "' + obj['type'] + '"');
+		}
+	}
+
+};
+
+Comments.removeAllBy = function(profile_id) {
+	for(c_ in Comments.comments) {
+		var c = Comments.comments[c_];
+		if(c['pid'] == profile_id)
+			Comments.removeComment(c['id']);
+	}
+
+	for(c_ in Comments.liveComments.top) {
+		var c = Comments.liveComments.top[c_];
+		if(c['pid'] == profile_id)
+			Comments.removeComment(c['id']);
+	}
+
+	for(c_ in Comments.liveComments.child) {
+		var c = Comments.liveComments.child[c_];
+		if(c['pid'] == profile_id)
+			Comments.removeComment(c['id']);
+	}
+};
+
+Comments.removeComment = function(cid) {
+	View.remove(cid);
+
+	delete Comments.comments[cid];
+	delete Comments.liveComments.top[cid];
+	delete Comments.liveComments.child[cid];
+
+	Comments.updateLiveComment()
+};
+
+Comments.liveUpdateVote = function(data){
+	//alert(data);
+	var cid = data['comment_id'];
+	var c;
+	if(Comments.comments[cid] != undefined)
+		c = Comments.comments[cid];
+	else if (Comments.liveComments.top[cid] != undefined)
+		c = Comments.liveComments.top[cid];
+	else if (Comments.liveComments.child[cid] != undefined)
+		c = Comments.liveComments.child[cid];
+
+	if(!c)
+		return;
+
+
+	if(c['likes'] != data['likes']) {
+		c['likes'] = data['likes'];
+		if(data['likes'] > 0) {
+			$('#post-' + cid + ' > .post-content .voting a.vote-up .count').removeClass('hide').text( parseInt(data['likes']) );
+			hlElement($('#post-' + cid + ' > .post-content .voting a.vote-up .count'));
+		} else
+			$('#post-' + cid + ' > .post-content .voting a.vote-up .count').addClass('hide').hide().text('0');
+	}
+
+	if(c['dislikes'] != data['dislikes']) {
+		c['dislikes'] = data['dislikes'];
+		if(data['dislikes'] > 0) {
+			$('#post-' + cid + ' > .post-content .voting a.vote-down .count').removeClass('hide').text( parseInt(data['dislikes']) );
+			hlElement($('#post-' + cid + ' > .post-content .voting a.vote-down .count'));
+		} else
+			$('#post-' + cid + ' > .post-content .voting a.vote-down .count').addClass('hide').hide().text('0');
+	}
+
+
+
+
+	
+}
+
+Comments.updateListeners = function(data) {
+	//TEMP!!!
+	return;
+	var html = '';
+	var total = null;
+	var user_info = null;
+
+	if(data) {
+		total = data['total'];
+		user_info =  data['users'];
+	}/* else {
+		total = 1;
+		user_info = [];
+		if(Comments.profile) {
+			var ld = {
+				'name': Comments.profile['first_name'] + ' ' + Comments.profile['last_name']
+				,'photo': Comments.profile['photo']
+				,'id': Comments.profile['id']
+			};
+			user_info.push(ld);
+		}
+	}*/
+
+	if(total && total > 0) {
+		html += '<div class="total">';
+			html += total + ' ' + Comments.dt(total, 'people reading') + ' ' + Comments.t('listeners_comments');
+		html += '</div>';
+
+		/* same profile_ids might be connected through different browsers w different session_ids */
+		var already_in_list = [];
+
+		var users_num = 0;
+		$.each(user_info, function(index, value) {
+			if( users_num<10 && (!already_in_list[ value['id'] ] || value['id'] == 0) ) {
+
+
+				var photo = (value['photo']) ? value['photo'] : Comments.defaultPhoto;
+				html += '<div class="listener" rel="tooltip" title="' + value['name'] + '">' + 
+				'<img src="' + photo + '"/>' +
+				'</div>';
+
+				if(value['id'] > 0)
+					already_in_list[ value['id'] ] = 1;
+
+				users_num++;
+			}
+		});
+
+	}
+	$('#listeners').html(html);
+	$('#listeners > .listener').tooltip({'placement':'bottom'});
+}
+
+
+/*
+ * Add liveUpdates to view
+ * */
+Comments.showLiveUpdate = function(parent_id)
+{
+	if(parent_id) {
+		if(Comments.liveComments.child[parent_id] != undefined) {
+			var child_comments = Comments.liveComments.child[parent_id];
+			Comments.add( {
+				'comments': child_comments,
+				'count': Object.size(child_comments)
+			}, true, true); //add_to_top = true, mark_as_new = true
+			delete Comments.liveComments.child[parent_id];
+		}
+
+		$("#post-" + parent_id + " > .post-content" ).find("li.live-update").removeClass('active');
+		Comments.liveComments_updateBelowNotifier();
+	} else {
+		Comments.add( {
+			'comments': Comments.liveComments.top,
+			'count': Object.size(Comments.liveComments.top)
+		}, true, true); //add_to_top = true, mark_as_new=true
+
+		//if there were come pending comments in liveComments.child with these parent_ids - add them to view
+		for(p_id in Comments.liveComments.top) {
+			if(Comments.liveComments.child[p_id] != undefined) {
+				var child_comments = Comments.liveComments.child[p_id];
+				Comments.add( {
+					'comments': child_comments,
+					'count': Object.size(child_comments)
+				}, false, true); //add_to_top = false, mark_as_new = true
+				delete Comments.liveComments.child[p_id];
+			}
+		}
+
+		Comments.liveComments.top = {};
+		//$("#" + this.root).find(".show-new-btn").hide();
+		$("#showNewTopButton").hide();
+	}
+
+	Comments.removeOldComments();
+
+}
+
+Comments.removeOldComments = function()
+{
+	var parent_num = $('#post-list > li.post').length;
+	var total_num = $('#post-list li.post').length;
+
+	if(parent_num > 100 || total_num > 150)
+		Comments.Reload();
+}
+
+/*	
+ 	Add comment to the child list of Comments.liveComments object
+	If parent comment is not shown & not in liveComments - we skip it. If we than "showMore" this comment will be on screen
+*/
+Comments.addChildLiveComment = function(data)
+{
+	/*
+	 * Find this first parent we can use to attach this comment in liveComemnts object. This can be:
+	 * Comment that is already on screen
+	 * Comment that is in liveUpdate pending list (child or top)
+	 *
+	 * @return <parent_id> or 0 if appropriate parent not found
+	 */
+	var findAttachParent = function(data)
+	{
+		// in comments on page
+		if(Comments.comments[ data['parent_id'] ] != undefined) {
+			return Comments.comments[ data['parent_id'] ]['id'];
+		}
+
+		// in pending liveComments (top)
+		if(Comments.liveComments.top[ data['parent_id'] ] != undefined) {
+			return Comments.liveComments.top[ data['parent_id'] ]['id'];
+		}
+
+		// in pending liveComments (child)
+		for(att_id in Comments.liveComments.child) {
+			var att_list = Comments.liveComments.child[att_id];
+
+			for(list_id in att_list) {
+				var c = att_list[list_id];
+
+				/* if comment with appropriate id is in this list - return top-level attach-id */
+				if(c['id'] == data['parent_id']) {
+					return att_id;
+				}
+			}
+
+		}
+
+		return undefined; //nothing found
+	}
+
+	var attach_id = findAttachParent(data);
+
+	if(attach_id) {
+		if(Comments.liveComments.child[ attach_id ] == undefined)
+			Comments.liveComments.child[ attach_id ] = {};
+
+		Comments.liveComments.child[ attach_id ][ data['id'] ]= data;
+	}
+}
+
+/*
+ * process new 'live' comment received from server
+ */
+Comments.updateLiveComment = function(data)
+{
+	if(data) {
+		if(data['profile'])
+			this.profiles[ data.profile.id ] = data.profile;
+
+		var c = data.comment;
+		if(Comments.comments[c.id]) //already in view
+			return; 
+
+		var parent_id = c['parent_id'];
+		if(parent_id == 0)
+			Comments.liveComments.top[c.id] = c;
+		else
+			Comments.addChildLiveComment(c);
+	}
+
+	// Update counters --------------------------------------------------------------------
+	//update number of top comments.
+	var top_num = Object.size(Comments.liveComments.top);
+	
+		// include child comments that will be attached to top comments
+		for(top_id in Comments.liveComments.top) {
+			if(Comments.liveComments.child[ top_id ] != undefined)
+				top_num += Object.size(Comments.liveComments.child[top_id]);
+		}
+
+	if(top_num) {
+		$("#showNewTopButton").html(top_num + " " + Comments.dt(top_num, 'new comment')).show();
+	}
+
+
+	// more-new-comments-below notifier
+	if(Object.size(Comments.liveComments.child))
+		Comments.liveComments_updateBelowNotifier();
+
+	// each comment has a small icon, if there are new replies
+	Comments.liveComments_updateChildNotifiers();
+
+	Comments.liveComments_autoShow();
+}
+
+/*
+ * update comment indicators and buttons to notify that this comment has new child comments
+ */
+Comments.liveComments_updateChildNotifiers = function()
+{
+	var $menu_item = $('.inline-comment-menu > li.live-update').removeClass('active');//hide();
+
+	for(c_id in Comments.liveComments.child) {
+		var num = Object.size(Comments.liveComments.child[c_id]);
+
+		var $menu_item = $("#post-" + c_id + '-footer-menu > li.live-update');
+		//$menu_item.show();
+		$menu_item.addClass('active');
+		$menu_item.children("a").children(".text").html( num + " " + Comments.dt(num, 'new comment'));
+	}
+}
+
+/*
+ * update button indication that there are some new comments below current viewport. 
+ * Update on each window scroll
+ * On click - scroll to next parent comment
+ */
+Comments.liveComments_updateBelowNotifier = function()
+{
+	var keys = Object.keys(Comments.liveComments.child);
+	var min_y_key = 999999999999;
+	var min_p = null
+
+	for (var i = 0; i < keys.length; i++) {
+		var parent_id = keys[i];
+		var p = $("#post-" + parent_id + " > .post-content");
+		if(p.length && isBelowCurrentView(p) && p.offset().top < min_y_key) {
+			min_y_key = p.offset().top;
+			min_p = p;
+		}
+	}
+
+	if(min_p) {
+		var $below_btn = $("#showNewBelowButton");
+		$below_btn.unbind("click");
+		$below_btn.css('top', Comments.viewport_position['bottom'] - $below_btn.outerHeight()).show().one('click', function() {
+			$("#showNewBelowButton").hide();
+			Comments.scrollWidgetIframe(min_y_key);
+		});
+		return;
+	} else {
+		$("#showNewBelowButton").hide();
+	}
+
+	//for(parent_id in Comments.liveComments.child) {
+		//var p = $("#post-" + parent_id + " > .post-content");
+
+		
+		//if(p.length && isBelowCurrentView(p)) {
+		//}
+	//}
+	//// if nothing found
+}
+
+Comments.scrollWidgetIframe = function(scroll_y) {
+	if(window['pm'] === undefined)
+		return;
+
+	pm({
+	  target: window.parent,
+	  type: "KAMENT.scrollTo",
+	  data: scroll_y
+	});
+}
+
+
+//Comments.initDropdownMenu = function(e) {
+
+	//var menu = $(e).find('ul.dropdown-menu');
+	//var trigger = $(e).find('a.dropdown-toggle');
+	//if(menu.length == 1 && trigger.length == 1) {
+		//trigger.click(function(){
+			//menu.toggleClass('open');
+			//return false;
+		//});
+		//$(e).mouseleave(function(){menu.removeClass('open');});
+	//}
+//}
+
+/*Comments.initDropdownMenus = function()
+{
+	var menus = $('.dropdown').each(function(i,e){
+
+			//trigger.click(function(){
+
+	});
+}*/
+
+
+Comments.textareaAutoHeight = function(e/*, min_lines*/)
+{
+	var min_lines = Comments.replybox_min_rows;
+	var v = $(e).val();
+	if(!e)
+		return;
+	if(!min_lines)
+		min_lines = 1;
+
+
+	var sib = $(e).siblings('textarea')[0];
+	$(sib).attr('rows', 1).val( $(e).val() );
+
+	var line_height = parseInt($(sib).css('line-height'), 10);
+	if(line_height > 0)
+	{
+		var h = $(sib).prop('scrollHeight') - parseInt( $(sib).css('padding-top') ) - parseInt( $(sib).css('padding-top') );
+		var actual_lines = h / line_height;
+
+		$(sib).prop('rows', actual_lines);
+
+		var new_value = Math.min( Math.max(actual_lines + 1, min_lines), 15); //max 15
+		$(e).prop('rows', new_value);
+	}
+
+}
+
+Comments.showSection = function(section_name, no_scroll) 
+{
+	if(!this.sectionScroll)
+		this.sectionScroll = {};
+
+	if(no_scroll == undefined)
+		no_scroll = 0;
+
+	var r = $("#" + Comments.root + " > #layout");
+
+	// save current scroll
+	var current_section = r.children("section:visible");
+	if(current_section) {
+		var current_name = current_section.prop('id');
+		var current_scroll = this.viewport_position['top'];//$(window).scrollTop();
+
+		if(current_name != section_name)
+			this.sectionScroll[current_name] = current_scroll;
+	}
+	r.children("section").hide();
+
+	//if section doesnt exist -> add it
+	if( r.children("section#" + section_name).length == 0)
+		r.append('<section id="' + section_name + '"></section>');
+
+	var sec = r.children("section#" + section_name).show();
+
+	// if scroll data for this section exists - scrollTo
+	if(!no_scroll) {
+		if(this.sectionScroll[section_name])
+			this.scrollWidgetIframe(this.sectionScroll[section_name]);
+		else
+			this.scrollWidgetIframe(0); //else scroll to top
+	}
+
+	Comments._current_section = section_name;
+
+	return sec;
+}
+
+/*
+ * type:
+ * 	post - post reply section
+ * 	auth - auth section
+ *
+ * type difference is mainly button names etc
+ */
+Comments.showAuth = function(type)
+{
+	Auth.Init(type);
+	var sec = this.showSection("auth");
+}
+
+Comments.showAttachImage = function(reply_box)
+{
+	AttachImage.open(reply_box);
+}
+
+Comments.showProfile = function(profile_id)
+{
+	if(this.gamemasterPayload) {
+		pm({
+			target: window.parent,
+			type: "SVGameMaster-openUserProfile",
+			data: profile_id
+		});
+
+	} else {
+		var p = this.profiles[profile_id];
+		if(p) {
+			var html = this.getProfileHTML(p);
+			var sec = this.showSection("profile");
+			sec.html(html);
+
+			// bind event listeners
+			$(sec).find('.return-back a').click(function() {
+				Comments.showSection('comments');
+				return false;
+			});
+		}
+	}
+
+}
+
+Comments.getProfileHTML = function(profile_data) 
+{
+	var photo = this.defaultPhoto;
+	if(profile_data['photo'])
+		photo = profile_data['photo'];
+
+	var nickname = profile_data['nickname'];
+	var full_name = profile_data['first_name'] + " " + profile_data['last_name'];
+
+
+	var html = '';
+
+	html += '<div>';
+		html += '<div class="return-back">';
+			html += '<a href="#">← ' + Comments.t('Return to comments') + '</a>';
+		html += '</div>';
+
+		html += '<div class="profile-info">';
+			html += '<div class="avatar">' + 
+						'<img src="' + photo + '"/>' + 
+					'</div>';
+
+			html += '<header>' + 
+						'<h4>' + (nickname ? nickname : full_name) + '</h4>'+
+						'<h6>' + (nickname ? full_name : '') + '</h6>' + 
+
+						'<ul class="external-services">';
+
+							for(e in profile_data['external']) {
+								var external_id = profile_data['external'][e];
+								var external_url = '';
+								switch(e) {
+									case 'vkontakte':
+										  external_url = '//vk.com/id' + external_id;
+										  break;
+									case 'odnoklassniki':
+										  external_url = '//www.odnoklassniki.ru/profile/' + external_id;
+										  break;
+									case 'mailru':
+										  //TODO: need a way to get link using uid
+										  break;
+									case 'facebook':
+										  external_url = '//facebook.com/profile.php?id=' + external_id;
+										  break;
+									case 'twitter':
+										  external_url = 'https://twitter.com/account/redirect_by_id?id=' + external_id;
+										  break;
+									case 'google':
+										  //TODO
+										  break;
+								}
+								html += '<li><a href="' + external_url + '" target="_blank"><div class="external external-' + e + '"></div></a></li>';
+							}
+
+				html += '</ul>' + 
+
+					'</header>' + 
+
+					'<p>' + 
+						profile_data['about'] + 
+					'</p>';
+		html += '</div>'; //profile-info
+
+		html += '<div class="profile-stats">';
+
+			html += '<ul class="stats">' + 
+						'<li><h6>' + Comments.t('comments') + '</h6><p class="num">' + profile_data['comments'] + '</p></li>' + 
+						'<li><h6>' + Comments.t('votes') + '</h6><p class="num">' + profile_data['likes'] + '</p></li>' + 
+						//'<li><h6>' + Comments.t('communities') + '</h6><p class="num">' + profile_data['dislikes'] + '</p></li>' + 
+					'</ul>';
+
+		html += '</div>';
+	html += '</div>';
+
+	return html;
+}
+
+Comments.getReplyBoxHTML = function(type)
+{
+	var tmpl =
+	'<div class="%TYPE%">' + 
+		'<div class="alert alert-error" style="display:none">' +
+			'<span><!-- error goes here --></span>' +
+		'</div>' +
+		'<div class="postbox">' +
+			'<div class="avatar">' +
+				'<a href="#" class="user">' +
+					'<img data-role="user-avatar" src="%USER_PHOTO%">' +
+				'</a>' +
+			'</div>' +
+			'<div class="textarea-wrapper" data-role="textarea">' +
+				//'<textarea name="message" onfocus="if(this.rows < %MIN_ROWS%) this.rows=%MIN_ROWS%;" onkeydown="var v = this; setTimeout(function() {Comments.textareaAutoHeight(v, %MIN_ROWS%);},5);" class="textarea" rows=%MIN_ROWS% placeholder="{{Leave your comment...}}">' + 
+				'<textarea name="message" onfocus="if(this.rows < %MIN_ROWS%) this.rows=%MIN_ROWS%;" class="textarea" rows=%MIN_ROWS% placeholder="{{Leave your comment...}}">' + 
+				'</textarea>' + 
+
+				'<textarea class="textarea" style="visibility:hidden;position:absolute;left:0px;" rows=1>'+
+				'</textarea>'+
+
+				'<div class="attachments well clearfix"></div>' +
+				'<div class="post-actions">' +
+					'%ACTION_BUTTON%' +
+				'</div>' + 
+			'</div>' + // .textarea-wrapper
+			'<p class="inline-help muted"><small>Ctrl+Enter - отправить сообщение</small></p>'+
+
+
+
+			'%LOGIN_BOX%' +
+
+			'<div class="overlay"></div>' + // click-capture overlay for disabled state
+
+		'</div>' + // .postbox
+	'</div>';
+
+	var login_box = '';
+	if(!Comments.logged_in) {
+		login_box = 
+			'<div class="login-box clearfix">' +
+				'<div class="login">' +
+					'<h6 class="muted">' + Comments.t('Connect with') + '</h6>' +
+					'<ul class="services clearfix">' + 
+
+						'<li class="auth-sv">' + 
+							'<a class="full"  href="#" onclick = "Comments.Login(\'sv\');return false;" title="email">' +
+								'<div class="external external-sv" ></div>' + 
+							'</a>' +
+						'</li>' + 
+
+						'<li class="auth-vkontakte">' + 
+							'<a class="external external-vkontakte" href="#" onclick="Comments.Login(\'vkontakte\');return false;" title="ВKонтакте"></a>' + 
+						'</li>' + 
+
+						'<li class="auth-odnoklassniki">' + 
+							'<a class="external external-odnoklassniki" href="#" onclick="Comments.Login(\'odnoklassniki\');return false;" title="Одноклассники"></a>'+ 
+						'</li>' + 
+
+						'<li class="auth-mailru">' + 
+							'<a class="external external-mailru" href="#" onclick="Comments.Login(\'mailru\');return false;" title="Mail.ru"></a>'+ 
+						'</li>' + 
+
+						'<li class="auth-facebook">' + 
+							'<a class="external external-facebook" href="#" onclick="Comments.Login(\'facebook\');return false;" title="Facebook"></a>' + 
+						'</li>' + 
+
+						'<li class="auth-twitter">' + 
+							'<a class="external external-twitter" href="#" onclick="Comments.Login(\'twitter\');return false;" title="Twitter"></a>'+ 
+						'</li>' + 
+
+						'<li class="auth-google">' + 
+							'<a class="external external-google" href="#" onclick="Comments.Login(\'google\');return false;" title="Google"></a>'+ 
+						'</li>' + 
+						
+					'</ul>' + 
+
+				'</div>' + //.login
+
+				'<div class="register">' +
+					'<h6 class="muted">{{or register with SV}}</h6>' +
+					'<input name="name" type="text" placeholder="{{Name}}" />' +
+					'<input name="email" type="text" placeholder="{{Email address}}" />' +
+					//'<p class="inline-help muted"><small>Ваш email нужен что бы узнать об ответах на ваш комментарий</small></p>' + 
+					'<input name="password" type="password" placeholder="{{Password}}" />';
+
+			if(Comments.canComment == 'anyone') {	
+				login_box +=
+					'<label class="checkbox">' +
+						'<input type="checkbox" name="as_guest" /> {{Post as guest}}' +
+					'</label>';
+			}
+
+		login_box +=
+			'</div>' + // .register
+
+			'<div class="go">' +
+				'<button type="submit" class="btn btn-large"><i class="fa fa-long-arrow-right"></i></button>' +
+			'</div>' +
+
+			'</div>'; // .login-box
+	}
+
+
+	var action_buttons_html = '';
+	var submit_button_text  = '';
+	var submit_button_class = "btn";
+
+	if(Comments.allow_media) {
+		action_buttons_html += '<button class="btn attach-image"><i class="fa fa-camera"></i></button>';
+	}
+
+	if(type=='reply' || type=='new') {
+		submit_button_text = Comments.t('Post');//Comments.t('Post as') + ' <span data-role="username">' + Comments.current_name + '</span>';
+
+		if(!Comments.logged_in)
+			submit_button_class += ' hide';
+
+	} else if(type=='edit') {
+		submit_button_class = "btn btn-primary";
+		submit_button_text = Comments.t('Edit');
+		action_buttons_html += '<button class="btn" name="cancel">{{Cancel}}</button>' ;
+	}
+
+
+	action_buttons_html =
+		'<button type="submit" class="' + submit_button_class + '">' +
+			'<div class="loading"></div>' +
+			'<div class="btn-inner">' + submit_button_text + '</div>' +
+		'</button>' +
+		action_buttons_html;
+
+
+	// -----------------
+	var user_photo = Comments.defaultPhoto;
+	if(Comments.logged_in && Comments.profile['photo'])
+		user_photo = Comments.profile['photo'];
+	
+	// -----------------
+	var html = fillUpTemplate(tmpl, {
+		 'TYPE': type
+		,'USER_PHOTO': user_photo
+		,'MIN_ROWS': Comments.replybox_min_rows
+		,'ACTION_BUTTON': action_buttons_html
+		,'LOGIN_BOX': login_box
+	});
+
+	return html;
+}
+
+Comments.addAttachment = function($reply_box, attach)
+{
+	var preview = '';
+
+	if(attach['type'] == 'image') {
+		preview = '<img src="' + attach['url'] + '"/>';
+	}
+
+	value = Base64.encode( JSON.stringify(attach) );
+	var attach_tmpl =
+		'<div class="attach">' +
+			'%PREVIEW%' +
+			'<button type="button" class="remove" data-toggle="tooltip" title="{{Remove attach}}">×</button>' +
+			'<input type="hidden" name="attach" value="%VALUE%"/>' +
+		'</div>';
+
+	var attach_html = fillUpTemplate(attach_tmpl, {
+		 'PREVIEW': preview
+		,'VALUE': value
+	});
+
+	var $attach = $(attach_html).appendTo( $reply_box.find('.postbox .attachments') );
+	$attach.find('button.remove').tooltip();
+	$attach.find('button.remove').click(function() {
+		Comments.removeAttachment($attach)
+	});
+
+	$reply_box.find('.postbox .attachments').show(); // its hidden if empty
+}
+
+Comments.removeAttachment = function(attach_obj) {
+	if(attach_obj.siblings().length == 0)
+		attach_obj.closest('.attachments').hide();
+
+	attach_obj.remove();
+}
+
+Comments.openAttachedImage = function(cid, attach_id)
+{
+	//alert('CID: ' + cid + ', attach_id: ' + attach_id);
+	//var img_url = Comments.comments[cid]['attachments'][attach_id]['url'];
+	//alert(img_url);
+	pm({
+		target: window.parent,
+		type: "openAttachView",
+		data: { 'attachments': Comments.comments[cid]['attachments'], 'current_id': attach_id}
+	});
+}
+
+Comments.selectAll = function() {
+	$("#post-list > li.post > .post-checkbox").prop("checked", true);
+}
+
+Comments.selectNone = function() {
+	$("#post-list > li.post > .post-checkbox").prop("checked", false);
+}
+
+Comments.checkedChanged = function() {
+	var checked = $("#post-list > li.post > .post-checkbox:checked").length;
+	$("#" + Comments._selectAllId).prop("checked", (checked > 0));
+}
+
+Comments.flagComment = function(cid) {
+	$.ajax({ url: "/ajax/comments/flag",
+						type: 'POST',
+						data: {
+							'id': cid, // full-id
+							'CSRF_TOKEN': Comments._csrf_token
+						},
+						dataType: 'json'
+	});
+}
+
+Comments.adminSetBlock = function(btn_node, pid, value) {
+
+	if(value === undefined)
+		value = 1;
+
+	btn_node.prop('disabled','disabled');
+
+	$.ajax({ url: "/ajax/profile/setBlock",
+						type: 'POST',
+						data: {
+							'pid': pid,
+							'value': (value == true? 1 : 0),
+							'CSRF_TOKEN': Comments._csrf_token
+						},
+						dataType: 'json'
+	})
+	.done(function(data) { 
+		if( data['status'] == "success")
+		{
+			Comments.profiles[pid] = data['data'];
+			btn_node.parent().children('button.block, button.unblock').show();
+			btn_node.hide();
+
+		}
+	})
+	.always(function() {
+		btn_node.prop('disabled','');
+	});
+}
+
+Comments.adminDeleteAndBlock = function(new_status, cid) {
+
+	Comments.setPostDisabled(cid);
+
+	$.ajax({ url: "/ajax/comments/deleteAndBlock",
+						type: 'POST',
+						data: {
+							'id': cid,
+							'status': new_status,
+							'CSRF_TOKEN': Comments._csrf_token
+						},
+						dataType: 'json'
+	})
+	.done(function(data) { 
+		if( data['status'] == "success")
+		{
+			Comments.remove(cid);
+
+			if(Comments._callback_CommentStatusChanged) {
+				Comments._callback_CommentStatusChanged();
+			}
+		}
+	})
+	.always(function() {
+		Comments.unsetPostDisabled(cid);
+	});
+}
+/*
+ * cid = -1 => all checked comments
+ * */
+Comments.adminChangeCommentStatus = function(new_status, cid) { 
+	var comments_ids = new Array();
+
+	if(cid == -1) {
+		var ids = new Array();
+		var checked = $("#post-list > li.post > .post-checkbox:checked").each(function(i,v){
+			comments_ids.push(v.name.match(/post-(\d+-\d+)/)[1]);
+		});
+	} else {
+		comments_ids.push(cid);
+	}
+	
+	$.each(comments_ids, function(i,v){ Comments.setPostDisabled(v);});	
+
+	$.ajax({ url: "/ajax/comments/updateStatus",
+						type: 'POST',
+						data: {
+							'ids': comments_ids.join(','), // full-id
+							'status': new_status,
+							'CSRF_TOKEN': Comments._csrf_token
+						},
+						dataType: 'json'
+	})
+	.done(function(data) { 
+		if( data['status'] == "success")
+		{
+			var active_types = Comments.filter_type.split(',');
+
+			for (ind in data['data']) {
+				var updated_comment = data['data'][ind];
+				Comments.comments[updated_comment['id']] = updated_comment;
+
+				$("#post-" + updated_comment['id']).children(".post-content").removeClass("mark-pending mark-flagged");//.addClass("mark-" + new_status);
+
+				if($.inArray(new_status, active_types) == -1)
+					Comments.remove(updated_comment['id']);
+			}
+
+			if(Comments._callback_CommentStatusChanged) {
+				Comments._callback_CommentStatusChanged();
+			}
+		}
+	})
+	.always(function() {
+		$.each(comments_ids, function(i,v){ Comments.unsetPostDisabled(v);});	
+	});
+}
+
+// sets disabled class to post and adds a top layer to prevent any clicks
+Comments.setPostDisabled = function(cid) {
+	var post = $("#post-" + cid);
+	if(post) {
+		post.addClass('disabled');
+		post.prepend("<div class='no-click-layer'></div>");
+	}
+}
+Comments.unsetPostDisabled = function(cid) {
+	var post = $("#post-" + cid);
+	if(post) {
+		post.removeClass('disabled');
+		post.children(".no-click-layer").remove();
+	}
+}
+
+Comments.remove = function(cid) {
+
+	View.remove(cid);
+
+	if(this.comments[cid])
+		delete this.comments[cid];
+
+	if(this.offset > 0)
+		this.offset--;
+}
+
+/*
+ * Send actual postReply request
+ * ёбаный пиздец, переписать постинг нормально!
+ */
+Comments.sendPostReply = function(options)
+{
+	if(!Comments._postReplyData) {
+		console.log('_postReplyData is empty!');
+		return false;
+	}
+
+	var message     = Comments._postReplyData['message'];
+	var attachments = Comments._postReplyData['attachments'];
+	var parent_id   = Comments._postReplyData['parent_id'];
+	var replybox    = Comments._postReplyData['replybox'];
+	var ta          = replybox.find('textarea[name="message"]');
+	ta = $(ta);
+
+	var page_id = Comments.page_id;
+	if(Comments.view == 'admin')
+		page_id = Comments.comments[parent_id]['page_id'];
+
+	var request_data = {
+		'page_id':page_id
+		,'message':message
+		,'CSRF_TOKEN': Comments._csrf_token
+		,'attachments': attachments
+	};
+
+	if(parent_id)
+		request_data['parent'] = parent_id;
+
+	if(Comments._postReplyData['name'])
+		request_data['name'] = Comments._postReplyData['name'];
+	if(Comments._postReplyData['email'])
+		request_data['email'] = Comments._postReplyData['email'];
+	if(Comments._postReplyData['password'])
+		request_data['password'] = Comments._postReplyData['password'];
+	if(Comments._postReplyData['register'])
+		request_data['register'] = Comments._postReplyData['register'];
+
+	//if(!Comments.logged_in) {
+		//request_data['name'] = options['author_name'];
+		//request_data['email'] = options['author_email'];
+		//request_data['register'] = options['register'];
+	//}
+	if(this.gamemasterPayload)
+		request_data['gamemasterPayload'] = this.gamemasterPayload;
+	
+	$.ajax({ url: "/commentswidget/post",
+						type: 'POST',
+						data: request_data,
+						dataType: 'json'
+	})
+	.done(function(data) { 
+		if( data['status'] == "success")
+		{
+			// if premoderation - add special box. if not - add comment itself
+			if(data['premoderation']) {
+				Comments.addPendingComment(data['premoderation'], parent_id);
+			} else {
+
+				var new_id = data['data']['comments'][0]['id'];
+
+				Comments.add( data['data'], true, true ); //add to top + mark as new
+				//if(!Comments.comments[new_id] && !Comments.liveComments.top[new_id] && !Comments.liveComments.child[new_id]) //already in view
+			}
+
+			var p = replybox.parent();
+
+			if(p.prop('id') != "addPost") { //addPost - is the primary no-parent replybox
+				p.remove(); //remove with parent li.reply
+				replybox = null;
+			}
+			else { // clear postbox
+				replybox.find('.attachments').html('').hide();
+				ta.val('');
+				ta.blur(); //no refresh placeholder
+			}
+
+			Comments.eventCallback('newComment');
+
+			YandexMetricaGoal('Comment');
+
+			if(data['gamemaster_event_result']) {
+				pm({
+					target: window.parent,
+					type: 'SVGameMaster-eventResult',
+					data: data['gamemaster_event_result']
+				});
+			}
+
+		}
+
+		if(options['callback'])
+			options['callback'](data);
+
+	})
+	.fail(function() { 
+		if(options['callback'])
+			options['callback']({'status':'error', 'error': Comments.t('Error posting')});
+	})
+}
+
+
+Comments.sendEditComment = function(options)
+{
+	if(!Comments._postReplyData) {
+		console.error('_postReplyData is empty!');
+		return false;
+	}
+
+	var message		= Comments._postReplyData['message'];
+	var cid			= Comments._postReplyData['parent_id']; //cid stored in parent
+	var attachments	= Comments._postReplyData['attachments'];
+	var replybox	= Comments._postReplyData['replybox'];
+	var ta			= replybox.find('textarea[name="message"]');
+	ta = $(ta);
+
+//	var page_id = Comments.page_id;
+	//if(Comments.view == 'admin')
+		//page_id = Comments.comments[parent_id]['page_id'];
+
+	var request_data = {
+		 'cid': cid
+		,'text': message
+		,'attachments': attachments
+		,'CSRF_TOKEN': Comments._csrf_token
+	};
+
+	$.ajax({ url: "/ajax/comments/edit",
+						type: 'POST',
+						data: request_data,
+						dataType: 'json'
+	})
+	.done(function(data) { 
+		if( data['status'] == "success")
+		{
+			Comments.comments[cid] = data['data']['comment'];
+			View.update(cid);
+
+			var p = replybox.remove();
+		}
+
+		if(options['callback'])
+			options['callback'](data);
+	})
+	.fail(function() { 
+		if(options['callback'])
+			options['callback']({'status':'error', 'error': Comments.t('Error editing')});
+	})
+}
+
+
+/*
+ * боже какой пиздец... всё переписать к хуям
+ */
+Comments.tryPostReply = function(parent_id, $replybox, type)
+{
+	var message = '';
+
+	message = $replybox.find('textarea[name="message"]').val();
+
+	var alert_box = $replybox.children('div.alert-error');
+
+	//clear alert message if any
+	alert_box.children('span').html('');
+	alert_box.hide();
+
+	var attachments = [];
+	$replybox.find('.attachments .attach input[name="attach"]').each(function(i,v){
+		var val = $(v).val();
+		attachments.push(val);
+	});
+
+	if(!message && attachments.length == 0) {
+		alert_box.children('span').html( Comments.t('Cannot post empty!') );
+		alert_box.show();
+		return false;
+	}
+
+	// postReply data, used in different 'post' functions
+	// when posting done - reset this var
+	Comments._postReplyData = { 
+		 'message': message
+		,'parent_id': parent_id
+		,'replybox': $replybox
+		,'attachments': attachments
+	};
+
+	if(!Comments.logged_in) {
+		var name = $.trim( $replybox.find('input[name="name"]').val() );
+		var email = $.trim( $replybox.find('input[name="email"]').val() );
+		var password = $replybox.find('input[name="password"]').val();
+		var register = $replybox.find('input[name="as_guest"]').is(':checked') ? 0 : 1;
+
+		if(!name) {
+			alert_box.children('span').html( Comments.t('Please enter your name or login') );
+			alert_box.show();
+			return false;
+		}
+
+		if(email) { // email set
+			if(!email.match(/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/)) {
+				alert_box.children('span').html( Comments.t('Bad email format') );
+				alert_box.show();
+				return false;
+			}
+		} else { // email not set
+			if(register) {
+				alert_box.children('span').html( Comments.t('Please enter your email') );
+				alert_box.show();
+				return false;
+			}
+		}
+
+		if(register && password.length < 6) {
+				alert_box.children('span').html( Comments.t('Password too short, min 6 symbols') );
+				alert_box.show();
+				return false;
+		}
+
+		Comments._postReplyData['name']     = name;
+		Comments._postReplyData['email']    = email;
+		Comments._postReplyData['password'] = password;
+		Comments._postReplyData['register'] = register;
+
+	}
+
+	$replybox.find('.postbox').addClass('disabled');
+
+	var callback = function(data){
+		$replybox.find('.postbox').removeClass('disabled');
+
+		if(data) {
+
+			if(data['status'] == 'success') {
+
+				if(register)
+					Comments.UserLoginUpdate();
+
+			} else {
+				alert_box.children('span').html( data['error'] );
+				alert_box.show();
+			}
+
+		} else {
+			alert_box.children('span').html( Comments.t("Error posting") );
+			alert_box.show();
+		}
+
+	};
+
+	if(type == 'reply' || type == 'new') {
+		Comments.sendPostReply({'callback': callback});
+	} else if(type=='edit') {
+		Comments.sendEditComment({'callback': callback});
+	}
+}
+
+Comments.showAlert = function(message)
+{
+    var div = document.createElement('div');
+	div.setAttribute('class', 'alert alert-error');
+	div.innerHTML = message + '<button type="button" class="close" data-dismiss="alert">×</button>';
+	document.getElementById('alerts').appendChild(div);
+	setTimeout(function() {
+			$(div).fadeOut(3000, function() { $(this).remove(); });
+		},
+	3*1000);
+}
+
+/*
+ * type: 
+ * 		reply - basic replybox
+ * 		edit - edit comment replybox
+ */
+Comments.attachReplyBox = function(parent_node, parent_id, type)
+{
+	if(type == undefined)
+		type = 'reply';
+
+	var box_html = Comments.getReplyBoxHTML(type);
+	var box = $(box_html).appendTo(parent_node);
+
+	$(box).find('.postbox button[type="submit"]').click(function(){
+		Comments.tryPostReply(parent_id, $(box), type);
+	});
+
+	// Ctrl+Enter
+	$(box).find('textarea[name="message"]').bind("keydown", function(e){
+		if (e.ctrlKey && e.keyCode == 13) {
+			Comments.tryPostReply(parent_id, $(box), type);
+		}
+	});
+
+	//$(box).find('.postbox .login-box button[type="submit"]').click(function(){
+		//Comments.tryPostReply(parent_id, $(box), type);
+	//});
+
+	$(box).find(".postbox button.attach-image").click(function(){
+		Comments.showAttachImage($(box));
+		return false;
+	})
+
+	$(box).find('textarea[name="message"]').bind("keyup change paste", function(){
+		Comments.textareaAutoHeight(this);
+	});
+
+
+	/*
+	 * Remove empty reply box on lost focus
+	 */
+	$(box).find('textarea[name="message"]').bind("blur", function(){
+
+		var that = this;
+
+		setTimeout(function() {
+			var text = $.trim( $(that).val() );
+			var attachNum = $(box).find('.attachments .attach input[name="attach"]').length;
+			var inAttachMode = $(box).attr('data-in-attach');
+			if(text == '' && attachNum == 0 && inAttachMode != '1') {
+
+				if(type == 'reply') { // dont remove 'main' replybox
+					box.parent().remove(); //remove with parent <li>
+					box = null;
+				}
+			}
+		}, 300);
+
+	});
+
+	$(box).find('input[name="as_guest"]').change(function(){
+		$(box).find('input[name="password"]').slideToggle();
+	});
+
+	box = $(box[0]);
+
+	box.find('.textarea-wrapper input[name="message"]').focus(function() {
+		box.addClass('expanded');
+	});
+
+	return box;
+}
+
+Comments.closeModal = function()
+{
+	var modal = $('body > .modal');
+	var modal_backdrop = $('body > .modal-backdrop');
+
+	modal.removeClass('in');
+	modal_backdrop.removeClass('in');
+
+	setTimeout(function() {
+
+		$('body > .modal').hide();
+		$('body > .modal-backdrop').hide();
+
+	}, 300);
+}
+
+Comments.openCustomModal = function(modal_html)
+{
+	var modal = $('body > .modal');
+	var modal_backdrop = $('body > .modal-backdrop');
+
+	if(modal.length == 0)
+		modal = $('<div class="modal fade"></div>').appendTo('body');
+
+	if(modal_backdrop.length == 0)
+		modal_backdrop = $('<div class="modal-backdrop fade"></div>').appendTo('body');
+
+	modal.html(modal_html);
+
+	modal.show();
+	modal_backdrop.show();
+	setTimeout(function(){ modal.addClass('in'); modal_backdrop.addClass('in');}, 10);
+}
+
+Comments.loginPopupClosed = function()
+{
+	//alert('hmmmm');
+}
+
+Comments.Login = function(type, callback)
+{
+	// cant use pm becouse postMessage doesnt work with popups in IE :E
+	Comments.loginPopupClosed = function() {
+		Comments.UserLoginUpdate(callback);
+		pm({
+			target: window.parent,
+			type: 'SVGameMaster-loginUpdate'
+		});
+
+	};
+
+	var loginWindow = null;
+	var url = '//' + this.subdomain + '.' + this.domain + '/externalAuth/' + type + '?cb=Comments.loginPopupClosed';
+
+	switch(type)
+	{
+		case 'sv':
+			loginWindow = window.open('//' + this.subdomain + '.' + this.domain + '/SVLoginBox?cb=Comments.loginPopupClosed','','width=460, height=300');
+			break;
+		case 'vkontakte':
+ 			loginWindow = window.open(url, '', 'width=810,height=420');
+			break;
+		case 'odnoklassniki':
+ 			loginWindow = window.open(url, '', 'width=810,height=420');
+			break;
+		case 'facebook':
+ 			loginWindow = window.open(url, '', 'width=983,height=474');
+			break;
+		case 'twitter':
+ 			loginWindow = window.open(url, '', 'width=983,height=474');
+			break;
+		case 'mailru':
+ 			loginWindow = window.open(url, '', 'width=983,height=474');
+			break;
+		case 'google':
+ 			loginWindow = window.open(url, '', 'width=983,height=474');
+			break;
+
+	}
+	if(loginWindow)
+		loginWindow.focus();
+
+}
+
+//user login procedure finished. update data
+Comments.UserLoginUpdate = function(callback)
+{
+	$('.postbox').addClass('disabled');
+
+	$.ajax({ url:"/commentswidget/loginUpdate",
+						type: 'GET',
+						data: {'page_id':Comments.page_id},
+						dataType: 'json'
+	})
+	.done(function(data) { 
+
+		if(data['status'] == "authenticated")
+		{
+			var p = data['data']['profileObject'];
+
+			Comments.logged_in = 1;
+			Comments.profile = p;
+			Comments.profiles[ p['id'] ] = p;
+
+			var full_name = trim(Comments.profile['first_name'] + " " + Comments.profile['last_name']);
+			Comments.current_name = (full_name ? full_name : Comments.profile['username'] );
+			//------------------------------------------------
+			$('.postbox').each(function(i,e) {
+				var btn = $(e).find('.post-actions > button[type="submit"]');
+				if(btn.length) {
+					$(btn).find('span[data-role="username"]').html( Comments.current_name );
+					btn.show();
+				}
+				$(e).find('.login-box').slideUp();
+				$(e).find('.avatar > a > img').prop('src', p['photo']);
+
+				$(e).removeClass('disabled');
+			});
+			//------------------------------------------------
+			if(data['data']['likes'] != undefined) {
+				for (cid in data['data']['likes'])
+				{
+					var like_val = data['data']['likes'][cid];
+					Comments.likesData[cid] = like_val;
+					if(Comments.comments[cid] != undefined) {
+						Comments.comments[cid]['liked_this'] = like_val;
+						if(like_val > 0)
+							$('#post-' + cid + ' > .post-content .voting a.vote-up').addClass('active');
+						else
+							$('#post-' + cid + ' > .post-content .voting a.vote-down').addClass('active');
+					}
+				}
+
+			}
+			//------------------------------------------------
+			//Comments._liveUpdateKey = data['data']['liveUpdateKey'];
+			//------------------------------------------------
+			$('#main-menu .user-menu').show();
+			$('#main-menu .auth-btn').hide();
+			View.updateAll();
+			Comments.initMainMenu();
+
+
+			// update profile
+			// update replyboxes
+			// update likes
+			
+			//TEMP !!!!!!!!
+			Comments.liveUpdateInit();
+		}
+
+	})
+	.fail(function() { 
+
+	})
+	.always(function() {
+		$('div.connect > ul.services').each(function(i,e){
+			var old = $(e).children('div.authprocess-old-html').html();
+			$(e).html(old);
+			$(e).removeClass('.authProcess');
+		});
+
+		if(callback)
+			callback();
+	});
+}
+
+Comments.filterStringUpdate = function(filter_string)
+{
+	if(Comments.filter_string != filter_string) {
+		Comments.filter_string = filter_string;
+		Comments.Init();
+		Comments.showMore();
+	}
+}
+
+Comments.authButtonClick = function()
+{
+	Comments.showAuth('auth');
+}
+
+Comments.logout = function()
+{
+
+	$.ajax({
+		url: '//' + Comments.subdomain + '.' + Comments.domain + '/user/logout',
+		type: 'POST',
+		data: {
+			'CSRF_TOKEN': Comments._csrf_token
+		},
+		dataType: 'json'
+	})
+	.always(function(){
+
+		pm({
+			target: window.parent,
+			type: 'SVGameMaster-loginUpdate'
+		});
+		
+		var logout_url = '//' + Comments.subdomain + '.' + Comments.domain + '/commentsWidget/logout/'+Comments.page_id+'?token='+Comments._csrf_token;
+		document.location.href = logout_url;
+
+	});
+}
+
+Comments.initMainMenu = function()
+{
+	var sorting_capitalized =  Comments.sorting.charAt(0).toUpperCase() + Comments.sorting.slice(1); 
+	var admin_panel_link = '';
+
+	if(Comments.profile['is_moderator']) {
+		var dashboard_url = '//' + Comments.subdomain + '.' + Comments.domain + '/admin/moderate';
+		var pending = '';
+		if(Comments.pending_num) {
+			pending = '<span class="badge badge-important">' +Comments.pending_num + '</span>';
+			dashboard_url += '#tabPending';
+		}
+		admin_panel_link = '<li class="admin-dashboard"><a href="' + dashboard_url + '" target="_blank">' + Comments.t('Admin dashboard') + pending + '</a></li>';
+	}
+
+	var admin_close_thread_item = '';
+	if(Comments.profile['is_moderator']) {
+		var close = true;
+		var title = Comments.t('Close discussion');
+		if(Comments.isClosed) {
+			close = false;
+			title = Comments.t('Open discussion');
+		}
+
+		admin_close_thread_item = '<li><a href="#" onclick="Comments.setClosed('+close+'); return false;">' + title + '</a></li>';
+	}
+
+	var html = 
+			'<li class="sort-menu dropdown">' + 
+				'<a href="#" class="dropdown-toggle" data-toggle="dropdown">' + Comments.t( sorting_capitalized ) + ' ' + '<i class="fa fa-caret-down"></i></a>'+
+					'<ul class="dropdown-menu" role="menu">' +
+						'<li ' + (Comments.sorting == 'best' ? 'class="selected"' : '') + '>' +
+							'<a href="#" onclick="$(this).parent().addClass(\'selected\').siblings().removeClass(\'selected\');Comments.updateSorting(\'best\'); return false;">' +
+								'<i class="fa fa-check"></i>' +
+								Comments.t('Best') +
+							'</a>' +
+						'</li>' +
+						'<li ' + (Comments.sorting == 'newest' ? 'class="selected"' : '') + '>' +
+							'<a href="#" onclick="$(this).parent().addClass(\'selected\').siblings().removeClass(\'selected\');Comments.updateSorting(\'newest\'); return false;">' +
+								'<i class="fa fa-check"></i>' +
+								Comments.t('Newest') +
+							'</a>' +
+						'</li>' +
+						'<li ' + (Comments.sorting == 'oldest' ? 'class="selected"' : '') + '>' +
+							'<a href="#" onclick="$(this).parent().addClass(\'selected\').siblings().removeClass(\'selected\');Comments.updateSorting(\'oldest\'); return false;">' +
+								'<i class="fa fa-check"></i>' +
+								Comments.t('Oldest') +
+							'</a>' +
+						'</li>' +
+					'</ul>' +
+			'</li>' + 
+
+			admin_panel_link +
+
+			'<li class="show-all-btn"><a href="#" id="showAll"><i class="fa fa-long-arrow-left"></i>' + ' '  + Comments.t('Show all comments') + '</a></li>' + 
+
+			'<li class="user-menu dropdown">' + 
+				'<a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="user-settings fa fa-cogs"></i> <i class="fa fa-caret-down"></i></a>'+
+					'<ul class="dropdown-menu pull-right" role="menu">' +
+						admin_close_thread_item +
+						'<li><a href="#" onclick="Comments.openProfileSettings(); return false;">' + Comments.t('Settings') + '</a></li>' +
+						'<li><a href="#" onclick=Comments.logout(); return false;>' + Comments.t('Logout') + '</a></li>' +
+					'</ul>' +
+			'</li>';
+
+	$('#main-menu').html(html);
+	if(Comments.logged_in) {
+		$('#main-menu li.auth-btn').hide();
+		$('#main-menu li.user-menu').show();
+	} else {
+		$('#main-menu li.auth-btn').show();
+		$('#main-menu li.user-menu').hide();
+	}
+
+	if(Comments.view == 'single') {
+		$('#main-menu li.show-all-btn').show();
+		$('#main-menu li.sort-menu').hide();
+	}
+
+	$("#authButton").click(this.authButtonClick);
+	$("#showAll").click(function() {
+		Comments.view = undefined;
+		Comments.Reload();
+	});
+}
+
+Comments.updateNoCommentsYet = function()
+{
+	if( Object.keys(Comments.comments).length ) { // if any comments in view
+		$("#post-list .no-comments-yet").remove();
+	} else {
+		var no_comments_message = Comments.t('No comments yet');
+		if(this.view == 'admin')
+			no_comments_message = Comments.t('No comments yet - admin');
+		else if(this.view == 'single')
+			no_comments_message = Comments.t('Comment not found');
+
+		var no_comments_yet_html = '<li class="no-comments-yet well"><p>' + no_comments_message + '</p></li>';
+		$('#post-list > li.no-comments-yet').remove();
+		$('#post-list').append(no_comments_yet_html);
+	}
+}
+
+Comments.Init = function()
+{
+	Comments.initialized = false;
+	//$('ul.post-list').html('<div class="loading"></div>');
+	// should be much faster
+	var post_list  = document.getElementById("post-list");
+	while (post_list.firstChild) {
+		 post_list.removeChild(post_list.firstChild);
+	}
+	
+	this.comments = {};
+	this.profiles = {};
+	this.profiles[this.profile.id] = this.profile;
+	this.offset = 0;
+	this.liveComments.top = {};
+	this.liveComments.child = {};
+
+	if(Comments.logged_in && Comments.profile) {
+		var full_name = trim(Comments.profile['first_name'] + " " + Comments.profile['last_name']);
+		Comments.current_name = (full_name ? full_name : Comments.profile['username'] );
+	} else {
+		Comments.current_name = Comments.t('guest');
+	}
+
+	if(Comments._selectAllId) {
+		$("#" + Comments._selectAllId).prop("checked", false);
+	}
+	Comments.showSection('comments', 1); //no scroll
+
+	Comments.initMainMenu();
+
+
+	//$("#showMoreButton > a > .btn-inner").html(Comments.t('Show more button'));
+	$("#showMoreButton").html(Comments.t('Show more button'));
+	$("#showMoreButton").click(this.showMore);
+
+	$("#showNewTopButton").click(function(){ Comments.showLiveUpdate();} );
+
+	$("#showNewBelowButton").html(Comments.t('More new comments below'));
+
+	//if(Comments.liveUpdate && !Comments.liveUpdate_timer_id) {
+		//var userAgent = window.navigator.userAgent;
+		//if (userAgent.match(/iPad/i) || userAgent.match(/iPhone/i)) {
+			//// skip, we have a bug in mobile safari with long polling. only 1 active connection at a time. 
+			//// return back later when we switch to sockets?
+		//} else {
+			//setTimeout(Comments.liveUpdate, 3000);
+		//}
+	//}
+	if(Comments.liveUpdateEnabled) {
+		Comments.liveUpdateInit();
+	}
+
+	$(document).mousemove(function(event) {
+	
+		var old_x = Comments.mouse_x, old_y = Comments.mouse_y;
+		Comments.updateMouseXY();
+
+		if(old_x != Comments.mouse_x || old_y != Comments.mouse_y) {
+			Comments.alive();
+		}
+	});
+
+
+	document.onkeydown = function(evt) {
+		Comments.alive();
+	};
+
+	if(Comments.view != 'single') {
+	  	if(!Comments.isClosed) 
+			Comments.attachReplyBox( $("#addPost").html(''), 0, 'new' );
+		else
+			View.attachClosedAlert();
+	}
+
+	Comments._callback_CommentStatusChanged = null;
+	Comments._callback_showMoreDone = null;
+
+	Comments.replybox_min_rows = 2;
+
+	Comments.alive();
+
+	Comments.initVisibilityAPI();
+
+	$.ajaxSetup({ cache: false });
+	Comments.initialized = true;
+
+	pm.bind('loginUpdate', function() {
+		Comments.UserLoginUpdate();
+	});
+
+}
+
+Comments.updateSorting = function(new_order)
+{
+	Comments.sorting = new_order;
+	Comments.Reload();
+}
+
+Comments.share = function(comment_id, type) {
+	var share_url = '//' + this.subdomain + '.' + this.domain + '/share/shareComment?comment_id=' + comment_id + '&type=' + type;
+	shareWindow = window.open(share_url, '', 'width=810,height=420');
+	shareWindow.focus();
+	
+}
+
+Comments.initVisibilityAPI = function()
+{
+	var hidden_name, visibilityChange_event_name; 
+
+	Comments.visibilityAPI_hidden_name = undefined;
+
+	if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support 
+		hidden_name = "hidden";
+		visibilityChange_event_name = "visibilitychange";
+	} else if (typeof document.mozHidden !== "undefined") {
+		hidden_name = "mozHidden";
+		visibilityChange_event_name = "mozvisibilitychange";
+	} else if (typeof document.msHidden !== "undefined") {
+		hidden_name = "msHidden";
+		visibilityChange_event_name = "msvisibilitychange";
+	} else if (typeof document.webkitHidden !== "undefined") {
+		hidden_name = "webkitHidden";
+		visibilityChange_event_name = "webkitvisibilitychange";
+	}
+
+	if (typeof document.addEventListener === "undefined" || 
+		typeof hidden_name === "undefined") {
+		console.log('VisibilityAPI not supported');
+	} else {
+		document.addEventListener(visibilityChange_event_name, Comments.visibilityChangeCallback, false);
+		Comments.visibilityAPI_hidden_name = hidden_name;
+		console.log('VisibilityAPI initialized');
+	}
+
+}
+
+Comments.sendSocketMessage = function(data) {
+	if(Comments.liveUpdateSocket)
+		Comments.liveUpdateSocket.send( JSON.stringify(data) );
+};
+
+
+Comments.visibilityChangeCallback = function()
+{
+	if(document[Comments.visibilityAPI_hidden_name]) { //window is set hidden
+		Comments.sleepMode = 1;
+		console.log('set sleepMode cos of hidden');
+
+		Comments._sleepStart = (new Date().getTime() / 1000);
+		//if(Comments.liveUpdateSocket) {
+			//Comments.liveUpdateSocket.close();
+			//Comments.liveUpdateSocket = undefined;
+		//}
+
+	} else {
+		if(Comments.sleepMode) {
+			console.log('unset sleepMode');
+			Comments.sleepMode = 0;
+		}
+
+		var sleepEnd = (new Date().getTime() / 1000);
+		//if(Comments._sleepStart && (sleepEnd - Comments._sleepStart) > 15) {
+			//Comments.Reload();
+		//}
+	}
+
+
+	//Comments.sendSocketMessage({
+		//'action': 'sleep',
+		//'sleepMode': Comments.sleepMode
+	//});
+}
+
+// return if comemtns_viewport is visible && window is active (VisibilityAPI);
+Comments.isVisible = function()
+{
+	var vp_visible = Comments.viewport_position['top'] >= 0 && Comments.viewport_position['bottom'] >= 0;
+
+	var visibility_api_visible = 1;
+	if( typeof Comments.visibilityAPI_hidden_name !== "undefined") { //if VisibilityAPI is accessible
+		visibility_api_visible = !document[Comments.visibilityAPI_hidden_name];
+	}
+
+	return vp_visible && visibility_api_visible;
+}
+
+Comments.updateViewport = function(params) {
+
+	if(!this._oldVieportParams)
+		this._oldVieportParams = {};
+
+	if(params['width'] != this._oldVieportParams['width'])
+		View.updateCropped();
+
+	if(Comments.isVisible) {
+		if(Comments._current_section == 'comments') {
+			View.updateNewClass();
+			Comments.liveComments_updateBelowNotifier();
+			Comments.liveComments_autoShow();
+		}
+	}
+
+	this._oldVieportParams = params;
+}
+
+/* check if new liveUpdate comments parent is in view & show em */
+Comments.liveComments_autoShow = function() {
+	if(!Comments.isLiveUpdateAutoShow)
+		return;
+
+	var $parents = $('li.live-update.active > a').each(function(i,e){
+		if(isScrolledIntoView(e)) {
+			$(e).trigger('click');
+		}
+	});
+
+	var $top = $('#showNewTopButton:visible');//.each(function(i,e){
+	if(isScrolledIntoView($top)) {
+		$($top).trigger('click');
+	}
+}
+
+Comments.Reload = function(show_more_callback)
+{
+	Comments.Init();
+	Comments.showMore(show_more_callback);
+}
+
+Comments.hardReload = function()
+{
+	var url = window.location.href.split('#')[0];
+	document.location.href = url;
+}
+
+//declOfNum translation
+Comments.dt = function(num, str)
+{
+	var trans = DEC_TRANSLATIONS[str];
+	if(!trans)
+		trans = [str,str,str];
+
+	return declOfNum(num, trans);
+}
+
+Comments.t = function(str)
+{
+	if(TRANSLATIONS[str])
+		return TRANSLATIONS[str];
+	else
+		return str;
+}
+
+Comments.showMore = function(show_more_callback)
+{
+
+	var load_more_btn = $("#showMoreButton");//$(this);
+	//load_more_btn.toggle();
+	load_more_btn.prop('disabled','disabled');
+
+	var req_url = "/ajax/comments/page";
+	var req_data = {'page_id':Comments.page_id, 'sorting':Comments.sorting, 'offset':Comments.offset};
+
+	if(Comments.view == 'admin') {
+		req_url = "/ajax/comments/all";
+		req_data['filter_type'] = Comments.filter_type;
+		req_data['filter_string'] = Comments.filter_string;
+		req_data['sorting'] = Comments.sorting;
+	}
+
+	$.ajax({ url: req_url,
+						type: 'GET',
+						data: req_data,
+						dataType: 'json'
+	})
+	.done(function(response) { 
+		if(response['status'] == "success")
+		{
+			Comments.add(response['data']);
+			if( ! response['data']['has_more'] )
+				load_more_btn.hide();
+			else
+				load_more_btn.show();
+
+			Comments.pending_num = response['data']['pending_num'];
+		}
+
+	})
+	.fail(function() { 
+
+	})
+	.always(function() {
+		// if we have a loading div in posts list  - this is the first time we add comments in container.
+		// remove it
+		$('#post-list > .loading').remove();
+
+		load_more_btn.prop('disabled','');
+		load_more_btn.removeClass('loading');
+
+		if(Comments._callback_showMoreDone)
+			Comments._callback_showMoreDone(Comments);
+
+		if(show_more_callback && isFunction(show_more_callback))
+			show_more_callback();
+
+		Comments.updateNoCommentsYet();
+		
+	});
+}
+
+Comments.addPendingComment = function(message, parent_id)
+{
+
+	var html = '';
+	html += '<div class="alert premoderation">' + message + '</div>';
+
+	html = '<li class="premoderation">' + html + '</li>';
+
+	var p; //parent for appending
+	if(parent_id) {
+		var parent_node = $("li#post-" + parent_id);
+		if(parent_node.length == 0)
+			p=$("#post-list");
+		else
+			p = parent_node.children("ul.children")[0];
+	}
+	else
+		p=$("#post-list");
+
+	var new_comment;
+	//if(parent_id == 0) 
+		new_comment = $(html).prependTo(p);
+	//else
+	//	new_comment = $(html).appendTo(p);
+
+}
+Comments.getDeletedCommentHTML = function(id) {
+	var html = '';
+
+	html += '<div class="post-content">';
+		html += '<div class="avatar"></div>';
+		html += '<div class="post-body">this post is deleted</div>';
+	html += '</div>';
+
+	html += '<ul class="children"></ul>';
+
+	html = '<li class="deleted post" id="post-' + id + '">' + html + '</li>';
+	return html;
+}
+
+Comments.add_ = function(data, add_to_top, mark_as_new) 
+{
+
+	var keys = [];
+	for(var k in data) keys.push(k);
+
+	if(add_to_top) keys.reverse();
+
+	//var have_parent_in_data
+
+	for(key_id in keys) {
+		var key = keys[key_id];
+
+		var current_id = data[key]['id'];
+
+		if(this.comments[current_id])
+			continue;
+
+		View.add(data[key], {
+			'add_to_top': add_to_top, 
+			'mark_as_new': mark_as_new
+		})
+
+		this.offset++;
+
+		this.comments[current_id] = data[key];
+	} // foreach comments
+}
+
+/* Add new comment */
+Comments.add = function(data, add_to_top, mark_as_new)
+{
+
+	if(mark_as_new == undefined)
+		mark_as_new = false;
+
+	if(data.profiles) {
+		for(p_ in data.profiles) 
+			this.profiles[ data.profiles[p_].id ] = data.profiles[p_];
+	}
+	if(data.pages) {
+		for(p_ in data.pages) 
+			this.pages[ data.pages[p_].id ] = data.pages[p_];
+	}
+
+	// we need somre special login if add_to_top. 
+	// In add_to_top we use reverse (add comments from last_id to first_id).
+	// This might lead to child comment being added before parent, which is not processed yet. 
+	// We need to separate comments that have parent comment in data(not in view yet) and add them after parents are in view
+	if(add_to_top) {
+		var parents = [];
+		var childs = [];
+
+		var ids = [];
+		for(var k in data.comments) ids.push(data.comments[k].id);
+
+
+		for(k in data.comments) {
+			var c = data.comments[k];
+			var pid = c.parent_id;
+			if($.inArray(pid, ids) > -1) //found
+				childs.push(c);
+			else
+				parents.push(c);
+
+		}
+
+		if(Comments.sorting == 'newest') {
+			parents.reverse();
+		}
+
+		Comments.add_(parents, 1, mark_as_new);
+		Comments.add_(childs, 0, mark_as_new);
+
+
+	} else {
+		Comments.add_(data.comments, 0, mark_as_new);
+	}
+
+	Comments.updateNoCommentsYet();
+
+	if(mark_as_new)
+		View.updateNewClass();
+}
+
+/*
+ * vote == 1	-> vote-up
+ * vote == -1	-> vote-down
+ */
+Comments.votePost = function(vote, id, a_elem)
+{
+
+	var data ={
+		'full_id': id,
+		'vote': vote,
+		'CSRF_TOKEN': Comments._csrf_token
+	};
+
+	if(this.gamemasterPayload)
+		data['gamemasterPayload'] = this.gamemasterPayload;
+
+	$.ajax({	url: "/ajax/comments/like",
+				type: 'POST',
+				data:	data
+	});
+
+	YandexMetricaGoal('CommentVote');
+
+	var c = Comments.comments[id];
+	if(!c)
+		return;
+	
+	var l = Comments.likesData[id]
+	if(!l) {
+		Comments.likesData[id] = vote;
+		if(vote > 0) c['likes']++;
+		else c['dislikes']++;
+	} else {
+		// we remove current liked_this like\dislike anyway
+		if(l > 0)
+			c['likes']--;
+		else
+			c['dislikes']--;
+		
+		// we set new like\dislike
+		if(vote > 0)
+			c['likes']++;
+		else if(vote < 0)
+			c['dislikes']++;
+
+		//c['liked_this'] = vote;
+		Comments.likesData[id] = vote;
+	}
+	
+	// update view
+	View.update(c['id']);
+}
+
+Comments.cancelEdit = function()
+{
+
+}
+
+Comments.adminEditMessage = function(cid)
+{
+	var c = Comments.comments[cid];
+	if(!c) return;
+	//var $c = $("#post-" + cid);
+	//var $post_content = $c.children(".post-content");
+	var $post_content = $("#post-" + cid + ' > .post-content');
+	$post_content.children('.post-body').hide();
+	var $replybox = Comments.attachReplyBox($post_content, cid, 'edit');
+
+	var text = htmlDecode(c['text']);
+
+	$replybox.find('textarea[name="message"]').html(text).trigger('change');
+
+	if(c['attachments']) {
+		for(ai in c['attachments']) {
+			var a = c['attachments'][ai];
+			Comments.addAttachment($replybox, a);
+		}
+	}
+
+	$replybox.find('button[name="cancel"]').click(function(){
+		$post_content.children('.post-body').show();
+		$replybox.remove();
+	});
+		////var original_text = htmlDecode(c['text']);
+		
+		//if(new_text != htmlDecode(c['text'])) {
+			//var btn = $editbox.find('button').prop('disabled','disabled');
+
+			//$.ajax({ url: "/ajax/comments/edit",
+								//type: 'POST',
+								//data: {
+									//'cid': cid,
+									//'text': new_text,
+									//'CSRF_TOKEN': Comments._csrf_token
+								//},
+								//dataType: 'json'
+			//})
+			//.done(function(data) { 
+				//if( data && data['status'] == "success")
+				//{
+					////$post_content.children(".post-body").html
+					////TODO: post updater. Need postRenderer class for this. Update post -> update several parts (menu, buttons, text< etc.)
+					//Comments.comments[cid] = data['data']['comment'];
+					//View.update(cid);
+				//}
+			//});
+		//}
+
+		//$editbox.remove();
+		//$post_content.children(".post-body").show();
+	//});
+
+	//$editbox.find('button.cancel').click(function(){
+		//$editbox.remove();
+		//$post_content.children(".post-body").show();
+	//});
+}
+
+Comments.getCommentHtml = function(data, node, mark_as_new)
+{
+	if(mark_as_new == undefined)
+		mark_as_new = false;
+
+	return View.getHTML(data, {'mark_as_new': mark_as_new});
+}
+
+// indicates that parent window is still alive.
+Comments.alive = function() {
+	Comments.lastAlive = Math.round((0+new Date()/1000));
+	if(Comments.sleepMode && Comments.isVisible()) {
+		Comments.sleepMode = 0;
+		//Comments.liveUpdate();
+	}
+}
+
+Comments.updatePostTiming = function()
+{
+	for(var i in this.comments)
+		View.updatePostTiming(i, this.comments[i]['time']);
+}
+
+Comments.setGameMasterPayload = function(p) {
+	this.gamemasterPayload = p;
+
+	p = JSON.parse(p);
+
+	//if(Comments.subdomain == 'vestiru-sport') {
+		//if(p['metadata'] && p['metadata']['sport']) {
+			//var sport = p['metadata']['sport'];
+			//if(sport != 'opening' && sport != 'closing') {
+				//var _onclick = '';
+				//if(Comments.logged_in)
+					//_onclick = 'Comments.showProfile(' + Comments.profile.id + ');';
+				//else
+					//_onclick = 'Comments.openGMAbout();';
+
+				//_onclick += 'return false;';
+				//var _html = 
+				//'<div class="alert alert-info" style="display:none;">' +
+					//'Значки для регулярных болельщиков: ' +
+					//'<a href="#" onclick="'+_onclick+'" ><img src="http://svkament.ru/images/vestiru/badges/sport-' + sport + '-1.png" /></a>' + "\n" +
+					//'<a href="#" onclick="'+_onclick+'" ><img src="http://svkament.ru/images/vestiru/badges/sport-' + sport + '-2.png" /></a>' + "\n" +
+					//'<a href="#" onclick="'+_onclick+'" ><img src="http://svkament.ru/images/vestiru/badges/sport-' + sport + '-3.png" /></a>' + "\n" +
+				//'</div>';
+
+				//$('#vestiru-banner').append(_html);
+			//}
+		//}
+	//}
+
+}
+
+Comments.openDiscoveryPage = function(url) {
+	YandexMetricaGoal('discoveryClick');
+	setTimeout(function() {
+		pm({
+		  target: window.parent,
+		  type:'openPage',
+		  data: url
+		});
+	}, 300);
+
+}
+
+Comments.setClosed = function(close) {
+
+	var action = 'open';
+	if(close)
+		action = 'close';
+
+	$.ajax({
+		url: '/ajax/discussion/' + action
+		,type: 'POST'
+		,data: {
+			'page_id': Comments.page_id
+			,'CSRF_TOKEN': Comments._csrf_token
+		}
+		,dataType: 'json'
+	})
+	.done(function(data) { 
+		try {
+			if( data ) {
+				if (data['status'] && data['status'] == 'success') {
+					Comments.hardReload();
+				} else {
+					Comments.showAlert(
+						data['error_message'] ? data['error_message'] : Comments.t('General error message')
+					);
+				}
+			}
+		} catch (err) {console.log(err.message)}
+	})
+	.error(function(){
+		Comments.showAlert( Comments.t('General error message') );
+	});
+}
+
+setInterval(function(){
+	if(Comments.discoveryShown)
+		return;
+
+	if(isScrolledIntoView($('#discoveryBox'))) {
+		YandexMetricaGoal('discoveryView');
+		Comments.discoveryShown = true;
+		console.log('discovery shown');
+	}
+
+}, 1000);
+
+setInterval(function() {
+	Comments.updatePostTiming();
+}, 30000);
+
+
+/**
+*
+*  Base64 encode / decode
+*  http://www.webtoolkit.info/
+*
+**/
+ 
+var Base64 = {
+ 
+	// private property
+	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+ 
+	// public method for encoding
+	encode : function (input) {
+		var output = "";
+		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+		var i = 0;
+ 
+		input = Base64._utf8_encode(input);
+ 
+		while (i < input.length) {
+ 
+			chr1 = input.charCodeAt(i++);
+			chr2 = input.charCodeAt(i++);
+			chr3 = input.charCodeAt(i++);
+ 
+			enc1 = chr1 >> 2;
+			enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+			enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+			enc4 = chr3 & 63;
+ 
+			if (isNaN(chr2)) {
+				enc3 = enc4 = 64;
+			} else if (isNaN(chr3)) {
+				enc4 = 64;
+			}
+ 
+			output = output +
+			this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+			this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+ 
+		}
+ 
+		return output;
+	},
+ 
+	// public method for decoding
+	decode : function (input) {
+		var output = "";
+		var chr1, chr2, chr3;
+		var enc1, enc2, enc3, enc4;
+		var i = 0;
+ 
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+ 
+		while (i < input.length) {
+ 
+			enc1 = this._keyStr.indexOf(input.charAt(i++));
+			enc2 = this._keyStr.indexOf(input.charAt(i++));
+			enc3 = this._keyStr.indexOf(input.charAt(i++));
+			enc4 = this._keyStr.indexOf(input.charAt(i++));
+ 
+			chr1 = (enc1 << 2) | (enc2 >> 4);
+			chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+			chr3 = ((enc3 & 3) << 6) | enc4;
+ 
+			output = output + String.fromCharCode(chr1);
+ 
+			if (enc3 != 64) {
+				output = output + String.fromCharCode(chr2);
+			}
+			if (enc4 != 64) {
+				output = output + String.fromCharCode(chr3);
+			}
+ 
+		}
+ 
+		output = Base64._utf8_decode(output);
+ 
+		return output;
+ 
+	},
+ 
+	// private method for UTF-8 encoding
+	_utf8_encode : function (string) {
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+ 
+		for (var n = 0; n < string.length; n++) {
+ 
+			var c = string.charCodeAt(n);
+ 
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			}
+			else if((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+			else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+ 
+		}
+ 
+		return utftext;
+	},
+ 
+	// private method for UTF-8 decoding
+	_utf8_decode : function (utftext) {
+		var string = "";
+		var i = 0;
+		var c = c1 = c2 = 0;
+ 
+		while ( i < utftext.length ) {
+ 
+			c = utftext.charCodeAt(i);
+ 
+			if (c < 128) {
+				string += String.fromCharCode(c);
+				i++;
+			}
+			else if((c > 191) && (c < 224)) {
+				c2 = utftext.charCodeAt(i+1);
+				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+				i += 2;
+			}
+			else {
+				c2 = utftext.charCodeAt(i+1);
+				c3 = utftext.charCodeAt(i+2);
+				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+				i += 3;
+			}
+ 
+		}
+ 
+		return string;
+	}
+ 
+}
+

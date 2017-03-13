@@ -1,0 +1,187 @@
+var myMap, myCollection, clusterer, customItemContentLayout;
+        
+ymaps.ready(ymapinit);
+
+function ymapinit () {
+myMap = new ymaps.Map("map-canvas", {
+            center: [56.326944, 44.0075],
+            zoom: 14,
+			controls: ['zoomControl']
+        });
+		
+myCollection = new ymaps.GeoObjectCollection();
+
+MyBalloonLayout = ymaps.templateLayoutFactory.createClass(
+		'<div class="map-mark">$[properties.imgbal]'+
+		'<div class="map-mark-info"><div class="name-mark">$[properties.name]</div>'+
+		'<div class="map-mark-about"><p><strong>Город:</strong> $[properties.town]<br />'+
+		'<strong>Адрес:</strong> $[properties.address]<br />'+
+		'<strong>Вид деятельности:</strong> $[properties.viddeyat]<br />'+
+		'<strong>Вид продукции:</strong> $[properties.vidprod]<br />'+
+		'<strong>Тип поставщика:</strong> $[properties.postavshik]<br /><br />'+
+		'$[properties.description]</div>'+
+		'<strong>Подробнее:</strong> $[properties.url]<br />'+
+		'</div><div class="pointer"></div><div class="close"></div></div>',
+{
+build: function () {
+                        this.constructor.superclass.build.call(this);
+
+                        this._element = $('.map-mark', this.getParentElement());
+
+                        this.applyElementOffset();
+
+                        this._element.find('.close')
+                            .on('click', $.proxy(this.onCloseClick, this));
+                    },
+ clear: function () {
+                        this._element.find('.close')
+                            .off('click');
+
+                        this.constructor.superclass.clear.call(this);
+                    },
+                   
+                    onSublayoutSizeChange: function () {
+                        MyBalloonLayout.superclass.onSublayoutSizeChange.apply(this, arguments);
+
+                        if(!this._isElement(this._element)) {
+                            return;
+                        }
+
+                        this.applyElementOffset();
+
+                        this.events.fire('boundschange');
+                    },
+                    
+                    applyElementOffset: function () {
+                        this._element.css({
+                            left: -(this._element[0].offsetWidth / 2)+168,
+                            top: -(this._element[0].offsetHeight + this._element.find('.pointer')[0].offsetHeight)
+                        });
+                    },
+                    
+                    onCloseClick: function (e) {
+                        e.preventDefault();
+
+                        this.events.fire('userclose');
+                    },
+                    
+                    getClientBounds: function () {
+                        if(!this._isElement(this._element)) {
+                            return MyBalloonLayout.superclass.getClientBounds.call(this);
+                        }
+
+                        var position = this._element.position();
+
+                        return [
+                            [position.left, position.top], [
+                                position.left + this._element[0].offsetWidth+28,
+                                position.top + this._element[0].offsetHeight + this._element.find('.pointer')[0].offsetHeight
+                            ]
+                        ];
+                    },
+
+                    _isElement: function (element) {
+                        return element && element[0] && element.find('.map-mark')[0];
+                    }
+                
+	});	
+
+		
+$.getJSON("admin/vivcategoriy.php", function(json){
+		
+var cat = '';
+		
+for (i = 0; i < json.category.length; i++) {			
+cat += '<a class="map-menu" data-toggle="collapse" data-parent="#accordion" href="#collapse_'+json.category[i].id+'"><img src="/wp-content/themes/att-apollo/mapscript/img/'+json.category[i].icon+'" class="img-rounded">'+
+' '+json.category[i].name+'</a></div>';
+
+}
+
+$('#accordion').append(cat);
+
+});
+
+$('#accordion').on('click', 'a', function () {
+
+myCollection.removeAll();
+
+var openAnchor = $(this).attr('href');	
+	
+var substringArray = openAnchor.split("_"); 
+	
+$.getJSON("admin/vivodpointsmapcat.php", {cat : substringArray[1]}, function(json){
+
+for (i = 0; i < json.markers.length; i++) {
+
+if(json.markers[i].url != '#'){
+					var url_link = '<a href="'+json.markers[i].url+'" target="_blank">Сайт</a>';
+					}
+					else{
+					var url_link = '';
+					}
+					
+var name_icon = json.markers[i].icon.split(".");
+
+if(json.markers[i].postavshik == "Обычный" || json.markers[i].postavshik == ""){ var marker_icon = name_icon[0]+'.png'};
+if(json.markers[i].postavshik == "Премиум"){var marker_icon = name_icon[0]+'_green.png'};
+if(json.markers[i].postavshik == "Акция"){var marker_icon = name_icon[0]+'_red.png'}	;				
+				
+var myPlacemark = new ymaps.Placemark([json.markers[i].lat,json.markers[i].lon], {
+                    // Свойства
+					iden: json.markers[i].id,
+                   	hintContent: json.markers[i].name,
+					name: json.markers[i].name,
+					description: json.markers[i].balloontext,
+					address: json.markers[i].address,
+					town: json.markers[i].town,
+					postavshik: json.markers[i].postavshik,
+					url: url_link,					
+					photo: json.markers[i].photo,
+					viddeyat: json.markers[i].viddeyat,	
+					vidprod: json.markers[i].vidprod,
+					imgbal:  '<img src="/wp-content/themes/att-apollo/mapscript/img/photo/' + json.markers[i].photo+'" width="169" height="127">'					
+					}, {
+                    balloonShadow: false,
+                    balloonLayout: MyBalloonLayout,					
+					iconLayout: 'default#image',
+					iconImageHref: '/wp-content/themes/att-apollo/mapscript/img/'+marker_icon,
+					iconImageSize: [32, 37],
+					iconImageOffset: [-16, -37]
+                });
+			
+				myCollection.add(myPlacemark);
+
+			}
+			 myMap.geoObjects.add(myCollection);
+			  myMap.setBounds(myMap.geoObjects.getBounds(), {checkZoomRange: true });
+
+});
+})
+
+myMap.geoObjects.add(myCollection);		
+}
+
+function go_point(id)
+{
+
+                    for(var i = 0, len = myCollection.getLength(); i < len; i++) {
+                        var placemark = myCollection.get(i);
+
+						
+						
+                        if(placemark.properties.get('iden') == id) {
+                            if(placemark.balloon.isOpen()) {
+                                placemark.balloon.close();
+                            }
+                            else {
+							
+							myMap.setCenter(placemark.geometry.getCoordinates());
+							
+							placemark.balloon.open();				
+                            
+                            }
+                            return;
+                        }
+                    }
+
+}	

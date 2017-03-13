@@ -1,0 +1,12 @@
+.d4p-tabber-widget ul.d4p-tabber-header { margin: 0 !important; overflow: auto; }
+.d4p-tabber-widget ul.d4p-tabber-header li { list-style:none; float:left; border-bottom: none; }
+.d4p-tabber-widget ul.d4p-tabber-header li a { display:block; padding:2px 10px; text-decoration:none!important; margin:1px; margin-left:0; font-size: 13px; }
+.d4p-tabber-widget ul.d4p-tabber-header li a.selected { margin-bottom: 0; cursor:default; font-weight: bold; }
+.d4p-tabber-widget div.widget { clear:left; padding: 5px 10px; margin-bottom: 1em; }
+.d4p-tabber-widget div.widget ul { margin:0 0 1em; }
+.d4p-tabber-widget div.d4p-st-tab { padding: 5px 10px; }
+
+.d4p-tabber-widget ul.d4p-tabber-header li a { color:#21759B; background:#DCDCDC; }
+.d4p-tabber-widget ul.d4p-tabber-header li a:hover { color:#ffffff; background:#21759B; }
+.d4p-tabber-widget ul.d4p-tabber-header li a.selected { color:#ffffff; background: #21759B; border-bottom:1px solid #21759B; }
+.d4p-tabber-widget div.d4p-st-tab { border: 1px solid #21759B; background-color: #ffffff; }
