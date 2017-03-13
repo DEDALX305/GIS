@@ -22,9 +22,9 @@ function init ()
             url: TagNameText,
             success: function(data)
             {
-                console.log(data);
+              /*  console.log(data); */
                 var answer = data;
-                console.log(answer);
+              /*  console.log(answer); */
                 var out = '<ul>';
                 myCollectionPhoto.removeAll();
                 for (j = 0; j < answer.data.length; j++)

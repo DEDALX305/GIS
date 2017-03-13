@@ -5,56 +5,46 @@ body, html
             width: 100%;
             height: 100%;
 }
-.row
-{
+body{
+  padding-top: 50px;
+}
+.row{
     margin-left: -375px;
     margin-right: -15px;
 }
-.row2
-{
+.row2{
     margin-left: -15px;
     margin-right: -15px;
     margin-top: 100px;
 }
-.container
-{
+.container{
     margin-right: 400px;
     margin-left: auto;
     padding-left: 15px;
     padding-right: -5px;
 }
-.container2
-{
+.container2{
     margin-left: 850px;
     margin-top: 10px;
     top: -700px;
     width: 1000px;
     position: relative;
 }
-.btn-additional
-{
+.btn-additional{
   color: #FF00FF;
 }
-body
-{
-  padding-top: 50px;
-}
-.navbar-brand
-{
+.navbar-brand{
   height: 100%;
 
 }
-.custom-search-form
-{
+.custom-search-form{
     margin-top:5px;
 }
-.teg
-{
+.teg{
 	margin-left:-350px;
   padding-top: -550px;
 }
-.form-control
-{
+.form-control{
     display: block;
     width: 100%;
     height: 34px;
@@ -71,17 +61,6 @@ body
     -webkit-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
     transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
 }
-.div2
-{
-  width: 150x; /* Ширина слоя */
-      margin: 7px; /* Значение отступов */
-      padding: 10px; /* Поля вокруг текста */
-    /*   border: 4px solid black; /* Параметры границы */
-  /*     background: #fc0; /* Цвет фона */
-}
-
-
-
 .box_left{
 	background-color: #0084FF;
 	width: 700px;
