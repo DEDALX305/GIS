@@ -4,3 +4,6 @@ c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\bin\Debug\
 c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\obj\Debug\Requests.csprojResolveAssemblyReference.cache
 c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\obj\Debug\Requests.exe
 c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\obj\Debug\Requests.pdb
+C:\Users\ALEX\Desktop\GIS\2Lab\Requests\Requests\bin\Debug\Requests.exe.config
+C:\Users\ALEX\Desktop\GIS\2Lab\Requests\Requests\obj\Debug\Requests.exe
+C:\Users\ALEX\Desktop\GIS\2Lab\Requests\Requests\obj\Debug\Requests.pdb
