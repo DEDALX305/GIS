@@ -1,0 +1,6 @@
+c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\bin\Debug\Requests.exe.config
+c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\bin\Debug\Requests.exe
+c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\bin\Debug\Requests.pdb
+c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\obj\Debug\Requests.csprojResolveAssemblyReference.cache
+c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\obj\Debug\Requests.exe
+c:\users\alex\documents\visual studio 2015\Projects\Requests\Requests\obj\Debug\Requests.pdb
